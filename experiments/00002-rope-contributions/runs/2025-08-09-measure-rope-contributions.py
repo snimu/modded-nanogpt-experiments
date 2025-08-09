@@ -352,8 +352,8 @@ def distributed_data_generator(filename_pattern: str, batch_size: int, rank : in
 @dataclass
 class Hyperparameters:
     # data
-    train_files = "data/fineweb10B/fineweb_train_*.bin" # input .bin to train on
-    val_files = "data/fineweb10B/fineweb_val_*.bin" # input .bin to eval validation loss on
+    train_files = "../data/fineweb10B/fineweb_train_*.bin" # input .bin to train on
+    val_files = "../data/fineweb10B/fineweb_val_*.bin" # input .bin to eval validation loss on
     val_tokens = 10485760 # how many tokens of validation data? it's important to keep this fixed for consistent comparisons
     train_seq_len = 64*1024 # FlexAttention sequence length
     val_seq_len = 4*64*1024 # FlexAttention sequence length for validation
@@ -382,8 +382,8 @@ master_process = (rank == 0) # this process will do logging, checkpointing etc.
 # begin logging
 if master_process:
     run_id_full = f"{run_id:03d}_{uuid.uuid4()}"
-    os.makedirs("logs/measure-rope-contributions", exist_ok=True)
-    logfile = f"logs/measure-rope-contributions/{run_id_full}.txt"
+    os.makedirs("../logs/measure-rope-contributions", exist_ok=True)
+    logfile = f"../logs/measure-rope-contributions/{run_id_full}.txt"
     print(logfile)
 def print0(s, console=False):
     if master_process:
