@@ -164,9 +164,9 @@ class CausalSelfAttention(nn.Module):
         assert B == 1, "Must use batch size = 1 for FlexAttention"
         q, k, v = F.linear(x, self.qkvo_w[:3].flatten(end_dim=1)).view(B, T, 3 * self.num_heads, self.head_dim).chunk(3, dim=-2)
         q, k = norm(q), norm(k) # QK norm @Grad62304977
-        qsum, ksum = q.sum(dim=-1, keepdim=True), k.sum(dim=-1, keepdim=True)
-        q = q * qrope_lambdas[0] / qsum + self.rotary(q) * qrope_lambdas[1] / qsum
-        k = k * krope_lambdas[0] / ksum + self.rotary(k) * krope_lambdas[1] / ksum
+        qsum, ksum = qrope_lambdas.sum(), krope_lambdas.sum()
+        q = q * qrope_lambdas[1] / qsum + self.rotary(q) * qrope_lambdas[0] / qsum
+        k = k * krope_lambdas[1] / ksum + self.rotary(k) * krope_lambdas[0] / ksum
         v = norm(v)
         if ve is not None:
             v = lambdas[0] * v + lambdas[1] * ve.view_as(v) # @KoszarskyB & @Grad62304977
