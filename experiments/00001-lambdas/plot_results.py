@@ -366,10 +366,7 @@ def plot_val_loss(
         lines = f.readlines()
 
     if isinstance(header_numbers, dict):
-        descriptions = list(header_numbers.values())
         header_numbers = list(header_numbers.keys())
-    else:
-        descriptions = ["" for _ in header_numbers]
 
     parsed = {hnum: {"step": [], "time": [], "loss": []} for hnum in header_numbers}
     for hnum in header_numbers:
@@ -385,9 +382,8 @@ def plot_val_loss(
                 parsed[hnum]["step"].append(int(line.split("step:")[1].split("/")[0]))
                 parsed[hnum]["time"].append(float(line.split("train_time:")[1].split("ms")[0]) / 1000)
     
-    for i, hnum in enumerate(header_numbers):
-        description = f": {descriptions[i]}" if descriptions[i] else ""
-        plt.plot(parsed[hnum][x_axis], parsed[hnum]["loss"], label=f"{hnum}{description}")
+    for hnum in header_numbers:
+        plt.plot(parsed[hnum][x_axis], parsed[hnum]["loss"])
     plt.xlabel("step" if x_axis == "step" else "time (s)")
     plt.ylabel("val_loss")
     plt.legend()
@@ -396,19 +392,19 @@ def plot_val_loss(
 
 
 if __name__ == "__main__":
-    for layers in [
-        [0, 1, 2, 3],
-        [4, 5, 6, 7],
-        [8, 9, 10, 11],
-        [12, 13, 14, 15],
-    ]:
-        plot_lambdas(
-            which="ve",
-            header_numbers=["2025-08-09-lambdas"],
-            filename="results.md",
-            layers=layers,
-            norm=False,
-        )
+    # for layers in [
+    #     [0, 1, 2, 3],
+    #     [4, 5, 6, 7],
+    #     [8, 9, 10, 11],
+    #     [12, 13, 14, 15],
+    # ]:
+    #     plot_lambdas(
+    #         which="ve",
+    #         header_numbers=["2025-08-09-lambdas"],
+    #         filename="results.md",
+    #         layers=layers,
+    #         norm=False,
+    #     )
 
     # plot_final_lambdas(
     #     which="ve",
@@ -418,3 +414,5 @@ if __name__ == "__main__":
     # )
 
     # plot_lambdas("unet", ["2025-08-09-lambdas"], "results.md")
+
+    plot_val_loss(["2025-08-09-lambdas"], "results.md", "step")
