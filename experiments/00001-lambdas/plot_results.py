@@ -102,13 +102,13 @@ def _plot_x0_lambdas(
             ax.plot(
                 parsed[hnum]["step"],
                 parsed[hnum]["l0"][:, layer],
-                label="x0-lambda",
+                label="x-lambda",
                 color="blue",
             )
             ax.plot(
                 parsed[hnum]["step"],
                 parsed[hnum]["l1"][:, layer],
-                label="x-lambda",
+                label="x0-lambda",
                 color="orange",
             )
         ax.set_title(f"Layer {layer}")
@@ -271,8 +271,8 @@ def _plot_final_x0_lambdas(
     
     # plot the final lambdas
     for hnum in header_numbers:
-        plt.plot(parsed[hnum]["l0"], label="x0-lambda final")
-        plt.plot(parsed[hnum]["l1"], label="x-lambda final")
+        plt.plot(parsed[hnum]["l0"], label="x-lambda final")
+        plt.plot(parsed[hnum]["l1"], label="x0-lambda final")
     plt.xlabel("layer")
     plt.ylabel(f"{'normed ' if norm else ''}lambda")
     plt.legend()
@@ -336,7 +336,7 @@ def _plot_final_ve_lambdas(
         plt.bar(v_x + w/2, v_y, label="v-lambda, v only", color="blue", alpha=0.5, width=w)
         v_ve_y = [parsed[hnum]["ve"][i] for i in v_ve_x]
         v_y = [parsed[hnum]["ve"][i] for i in v_x]
-        plt.bar(v_ve_x - w/2, v_ve_y, label="ve-lambda, ve only", color="orange", width=w)
+        plt.bar(v_ve_x - w/2, v_ve_y, label="ve-lambda, v+ve", color="orange", width=w)
         plt.bar(v_x - w/2, v_y, label="ve-lambda, v only", color="orange", alpha=0.5, width=w)
     plt.xlabel("layer")
     plt.ylabel(r"% v-lambda" if norm else "lambda")
@@ -399,20 +399,33 @@ if __name__ == "__main__":
     #     [12, 13, 14, 15],
     # ]:
     #     plot_lambdas(
-    #         which="ve",
+    #         which="x0",
     #         header_numbers=["2025-08-09-lambdas"],
     #         filename="results.md",
     #         layers=layers,
     #         norm=False,
     #     )
+    #     plot_lambdas(
+    #         which="x0",
+    #         header_numbers=["2025-08-09-lambdas"],
+    #         filename="results.md",
+    #         layers=layers,
+    #         norm=True,
+    #     )
 
-    # plot_final_lambdas(
-    #     which="ve",
-    #     header_numbers=["2025-08-09-lambdas"],
-    #     filename="results.md",
-    #     norm=True,
-    # )
+    plot_final_lambdas(
+        which="ve",
+        header_numbers=["2025-08-09-lambdas"],
+        filename="results.md",
+        norm=True,
+    )
+    plot_final_lambdas(
+        which="ve",
+        header_numbers=["2025-08-09-lambdas"],
+        filename="results.md",
+        norm=False,
+    )
 
     # plot_lambdas("unet", ["2025-08-09-lambdas"], "results.md")
 
-    plot_val_loss(["2025-08-09-lambdas"], "results.md", "step")
+    # plot_val_loss(["2025-08-09-lambdas"], "results.md", "step")
