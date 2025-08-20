@@ -277,7 +277,7 @@ class GPT(nn.Module):
         ve = [value_embed(input_seq) for value_embed in self.value_embeds]
         # 012 ... 012 structure on token value embeddings by @YouJiacheng, improved on @leloykun's U-net structure
         ve = [ve[0], ve[0]] + [None] * (len(self.blocks) - 4) + [[ve[1], ve[1]]]
-        assert len(ve) == len(self.blocks)
+        assert len(ve) == len(self.blocks), f"{len(ve)=}, {len(self.blocks)=}"
 
         long_bm, short_bm = self.create_blockmasks(input_seq, sliding_window_num_blocks)
         block_masks = [long_bm, short_bm, short_bm, short_bm, long_bm, short_bm, short_bm, short_bm, short_bm, short_bm, short_bm, long_bm, short_bm, short_bm, short_bm, long_bm]
