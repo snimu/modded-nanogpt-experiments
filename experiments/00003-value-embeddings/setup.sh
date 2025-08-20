@@ -19,3 +19,4 @@ torchrun --standalone --nproc_per_node=8 9-2025-08-13-no-valemb-1-14.py
 torchrun --standalone --nproc_per_node=8 10-2025-08-13-no-valemb-2-15.py
 torchrun --standalone --nproc_per_node=8 11-2025-08-17-shared-valemb-012-131415.py
 torchrun --standalone --nproc_per_node=8 12-2025-08-17-shared-valemb-01-1415.py
+torchrun --standalone --nproc_per_node=8 13-2025-08-20-baseline.py
