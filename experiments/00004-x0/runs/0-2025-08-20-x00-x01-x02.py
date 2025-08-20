@@ -533,7 +533,7 @@ for step in range(train_steps + 1):
         dist.all_reduce(val_loss, op=dist.ReduceOp.AVG)
         print0(f"step:{step}/{train_steps} val_loss:{val_loss:.6f} train_time:{training_time_ms:.0f}ms step_avg:{training_time_ms/max(step, 1):.2f}ms", console=True)
         skip_weights = model.scalars[:len(model.blocks)]
-        lambdas = model.scalars[1 * len(model.blocks): 4 * len(model.blocks)].view(-1, 3)
+        lambdas = model.scalars[1 * len(model.blocks): 5 * len(model.blocks)].view(-1, 4)
         sa_lambdas = model.scalars[4 * len(model.blocks): 6 * len(model.blocks)].view(-1, 2)
         print0(f"step:{step}/{train_steps} x_lambdas:{lambdas[:, 0].tolist()}", console=True)
         print0(f"step:{step}/{train_steps} x00_lambdas:{lambdas[:, 1].tolist()}", console=True)
