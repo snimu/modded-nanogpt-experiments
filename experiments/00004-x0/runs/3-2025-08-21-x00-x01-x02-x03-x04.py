@@ -215,6 +215,7 @@ class Block(nn.Module):
             x01: Tensor,
             x02: Tensor,
             x03: Tensor,
+            x04: Tensor,
             block_mask: BlockMask,
             lambdas: Tensor,
             sa_lambdas: Tensor,
@@ -225,6 +226,7 @@ class Block(nn.Module):
             + lambdas[2] * x01
             + lambdas[3] * x02
             + lambdas[4] * x03
+            + lambdas[5] * x04
         )
         if self.attn is not None:
             x = x + self.attn(x, ve, block_mask, sa_lambdas)
@@ -244,6 +246,7 @@ class GPT(nn.Module):
         self.embed1 = nn.Embedding(vocab_size, model_dim)
         self.embed2 = nn.Embedding(vocab_size, model_dim)
         self.embed3 = nn.Embedding(vocab_size, model_dim)
+        self.embed4 = nn.Embedding(vocab_size, model_dim)
         # token value embeddings by @KoszarskyB - inspired by @Grad62304977's value residual implementation following https://arxiv.org/abs/2410.17897
         # value embedding code simplification inspired by @ragulpr https://github.com/KellerJordan/modded-nanogpt/pull/78
         self.value_embeds = nn.ModuleList([nn.Embedding(vocab_size, model_dim) for _ in range(3)])
@@ -255,7 +258,7 @@ class GPT(nn.Module):
         assert num_layers % 2 == 0
         self.scalars = nn.Parameter(torch.cat([
             torch.ones(num_layers), # skip_weights
-            *[torch.tensor([1.0, 0.0, 0.0, 0.0, 0.0]) for _ in range(num_layers)], # block lambdas
+            *[torch.tensor([1.0, 0.0, 0.0, 0.0, 0.0, 0.0]) for _ in range(num_layers)], # block lambdas
             *[torch.tensor([0.5, 0.5]) for _ in range(num_layers)], # SA lambdas
         ]))
 
@@ -315,6 +318,7 @@ class GPT(nn.Module):
         x01 = norm(self.embed1(input_seq)[None])
         x02 = norm(self.embed2(input_seq)[None])
         x03 = norm(self.embed3(input_seq)[None])
+        x04 = norm(self.embed4(input_seq)[None])
 
         skip_connections = []
         skip_map = {
@@ -323,12 +327,12 @@ class GPT(nn.Module):
             11: 2,
         }
         skip_weights = self.scalars[:len(self.blocks)]
-        lambdas = self.scalars[1 * len(self.blocks): 6 * len(self.blocks)].view(-1, 5)
-        sa_lambdas = self.scalars[6 * len(self.blocks): 8 * len(self.blocks)].view(-1, 2)
+        lambdas = self.scalars[1 * len(self.blocks): 7 * len(self.blocks)].view(-1, 6)
+        sa_lambdas = self.scalars[7 * len(self.blocks): 9 * len(self.blocks)].view(-1, 2)
         for i in range(len(self.blocks)):
             if i in skip_map:
                 x = x + skip_weights[skip_map[i]] * skip_connections[skip_map[i]]
-            x = self.blocks[i](x, ve[i], x00, x01, x02, x03, block_masks[i], lambdas[i], sa_lambdas[i])
+            x = self.blocks[i](x, ve[i], x00, x01, x02, x03, x04, block_masks[i], lambdas[i], sa_lambdas[i])
             skip_connections.append(x)
 
         x = norm(x)
@@ -409,8 +413,8 @@ master_process = (rank == 0) # this process will do logging, checkpointing etc.
 # begin logging
 if master_process:
     run_id_full = f"{run_id:03d}_{uuid.uuid4()}"
-    os.makedirs("../logs/2-x00-x01-x02-x03", exist_ok=True)
-    logfile = f"../logs/2-x00-x01-x02-x03/{run_id_full}.txt"
+    os.makedirs("../logs/3-x00-x01-x02-x03-x04", exist_ok=True)
+    logfile = f"../logs/3-x00-x01-x02-x03-x04/{run_id_full}.txt"
     print(logfile)
 def print0(s, console=False):
     if master_process:
@@ -450,6 +454,7 @@ embed_params = [
     *model.embed1.parameters(),
     *model.embed2.parameters(),
     *model.embed3.parameters(),
+    *model.embed4.parameters(),
     *model.value_embeds.parameters(),
 ]
 scalar_params = [model.scalars]
@@ -553,13 +558,14 @@ for step in range(train_steps + 1):
         dist.all_reduce(val_loss, op=dist.ReduceOp.AVG)
         print0(f"step:{step}/{train_steps} val_loss:{val_loss:.6f} train_time:{training_time_ms:.0f}ms step_avg:{training_time_ms/max(step, 1):.2f}ms", console=True)
         skip_weights = model.scalars[:len(model.blocks)]
-        lambdas = model.scalars[1 * len(model.blocks): 6 * len(model.blocks)].view(-1, 5)
-        sa_lambdas = model.scalars[6 * len(model.blocks): 8 * len(model.blocks)].view(-1, 2)
+        lambdas = model.scalars[1 * len(model.blocks): 7 * len(model.blocks)].view(-1, 6)
+        sa_lambdas = model.scalars[7 * len(model.blocks): 9 * len(model.blocks)].view(-1, 2)
         print0(f"step:{step}/{train_steps} x_lambdas:{lambdas[:, 0].tolist()}", console=True)
         print0(f"step:{step}/{train_steps} x00_lambdas:{lambdas[:, 1].tolist()}", console=True)
         print0(f"step:{step}/{train_steps} x01_lambdas:{lambdas[:, 2].tolist()}", console=True)
         print0(f"step:{step}/{train_steps} x02_lambdas:{lambdas[:, 3].tolist()}", console=True)
         print0(f"step:{step}/{train_steps} x03_lambdas:{lambdas[:, 4].tolist()}", console=True)
+        print0(f"step:{step}/{train_steps} x04_lambdas:{lambdas[:, 5].tolist()}", console=True)
         print0(f"step:{step}/{train_steps} unet_lambdas:{skip_weights.tolist()}", console=True)
         print0(f"step:{step}/{train_steps} v_lambdas:{sa_lambdas[:, 0].tolist()}", console=True)
         print0(f"step:{step}/{train_steps} ve_lambdas:{sa_lambdas[:, 1].tolist()}", console=True)
