@@ -390,8 +390,8 @@ master_process = (rank == 0) # this process will do logging, checkpointing etc.
 # begin logging
 if master_process:
     run_id_full = f"{run_id:03d}_{uuid.uuid4()}"
-    os.makedirs("../logs/0-x00-x01-x02", exist_ok=True)
-    logfile = f"../logs/0-x00-x01-x02/{run_id_full}.txt"
+    os.makedirs("../logs/1-x00-x01-x02", exist_ok=True)
+    logfile = f"../logs/1-x00-x01-x02/{run_id_full}.txt"
     print(logfile)
 def print0(s, console=False):
     if master_process:
@@ -534,7 +534,7 @@ for step in range(train_steps + 1):
         print0(f"step:{step}/{train_steps} val_loss:{val_loss:.6f} train_time:{training_time_ms:.0f}ms step_avg:{training_time_ms/max(step, 1):.2f}ms", console=True)
         skip_weights = model.scalars[:len(model.blocks)]
         lambdas = model.scalars[1 * len(model.blocks): 5 * len(model.blocks)].view(-1, 4)
-        sa_lambdas = model.scalars[4 * len(model.blocks): 6 * len(model.blocks)].view(-1, 2)
+        sa_lambdas = model.scalars[5 * len(model.blocks): 7 * len(model.blocks)].view(-1, 2)
         print0(f"step:{step}/{train_steps} x_lambdas:{lambdas[:, 0].tolist()}", console=True)
         print0(f"step:{step}/{train_steps} x00_lambdas:{lambdas[:, 1].tolist()}", console=True)
         print0(f"step:{step}/{train_steps} x01_lambdas:{lambdas[:, 2].tolist()}", console=True)
