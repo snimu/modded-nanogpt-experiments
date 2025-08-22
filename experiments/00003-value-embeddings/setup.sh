@@ -22,3 +22,7 @@ torchrun --standalone --nproc_per_node=8 12-2025-08-17-shared-valemb-01-1415.py
 torchrun --standalone --nproc_per_node=8 13-2025-08-20-baseline.py
 torchrun --standalone --nproc_per_node=8 14-2025-08-21-new-valemb-15.py
 torchrun --standalone --nproc_per_node=8 15-2025-08-21-new-valemb-3-15.py
+torchrun --standalone --nproc_per_node=8 16-2025-08-21-new-valemb-3-14-4-15.py
+torchrun --standalone --nproc_per_node=8 17-2025-08-21-new-valemb-3-13-4-14-5-15.py
+torchrun --standalone --nproc_per_node=8 18-2025-08-21-new-valemb-3-12-4-13-5-14-6-15.py
+torchrun --standalone --nproc_per_node=8 19-2025-08-21-new-valemb-3-11-4-12-5-13-6-14-7-15.py
