@@ -372,14 +372,14 @@ class GPT(nn.Module):
         k = 3  # we're using top-3
         enc = tiktoken.encoding_for_model("gpt2")
         tokens = {i: enc.decode([tok]) for i, tok in enumerate(input_seq[:32])}
-        results = dict()
+        predictions = dict()
         names = ["x", "x00", "x01", "ve0", "ve1", "ve2"]
         inputs = [x, x00, x01, ve[0], ve[1], ve[2]]
         for name, input_ in zip(names, inputs):
             logits = F.linear(input_.flatten(end_dim=1)[:32], self.lm_head_w.bfloat16()).float()
             distribution = F.softmax(15 * logits * torch.rsqrt(logits.square() + 225), dim=-1)
             topk = torch.topk(distribution, k=k)
-            results[name] = {
+            predictions[name] = {
                 i: {probs[j]: enc.decode([toks[j]]) for j in range(k)}
                 for i, toks, probs in enumerate(
                     zip(topk.indices.tolist(), topk.values.tolist())
@@ -407,7 +407,7 @@ class GPT(nn.Module):
             "ve1-x01": ve1x01_cossim,
             "ve2-x01": ve2x01_cossim,
         }
-        return tokens, results, norms, cossims
+        return tokens, predictions, norms, cossims
 
 # -----------------------------------------------------------------------------
 # Our own simple Distributed Data Loader
@@ -668,10 +668,9 @@ if last_step:
     inputs, targets = next(train_loader)
     model.eval()
     with torch.no_grad():
-        tokens, stats, x_norms, cossims = model.forward(inputs, targets, get_window_size_blocks(0), extra_logging=True)
+        tokens, predictions, x_norms, cossims = model.forward(inputs, targets, get_window_size_blocks(0), extra_logging=True)
     print0(f"{tokens=}", console=True)
-    for key, value in stats.items():
-        print0(f"{key}: {value}", console=True)
+    print0(f"{predictions=}", console=True)
     print0(f"{x_norms=}", console=True)
     print0(f"{cossims=}", console=True)
 print0(f"peak memory allocated: {torch.cuda.max_memory_allocated() // 1024 // 1024} MiB "
