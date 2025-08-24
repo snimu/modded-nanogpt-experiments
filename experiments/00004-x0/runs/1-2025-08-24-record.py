@@ -14,7 +14,6 @@ with open(sys.argv[0]) as f:
     code = f.read() # read the code of this file ASAP, for logging
 import uuid
 import time
-from time import perf_counter
 import copy
 from dataclasses import dataclass
 from functools import lru_cache
@@ -28,7 +27,6 @@ import torch.nn.functional as F
 import torch.distributed as dist
 # use of FlexAttention contributed by @KoszarskyB
 from torch.nn.attention.flex_attention import BlockMask, flex_attention
-torch._inductor.config.coordinate_descent_tuning = True # we have banned this flag for new records because it causes compilation to take 30min
 
 # -----------------------------------------------------------------------------
 # Muon optimizer
@@ -207,8 +205,8 @@ class Block(nn.Module):
         self.attn = CausalSelfAttention(dim, num_heads, max_seq_len) if layer_idx != 7 else None
         self.mlp = MLP(dim)
 
-    def forward(self, x: Tensor, ve: Tensor | None, x0: Tensor, block_mask: BlockMask, lambdas: Tensor, sa_lambdas: Tensor):
-        x = lambdas[0] * x + lambdas[1] * x0
+    def forward(self, x: Tensor, ve: Tensor | None, x00: Tensor, x01: Tensor, x02: Tensor,block_mask: BlockMask, lambdas: Tensor, sa_lambdas: Tensor):
+        x = lambdas[0] * x + lambdas[1] * x00 + lambdas[2] * x01 + lambdas[3] * x02
         if self.attn is not None:
             x = x + self.attn(x, ve, block_mask, sa_lambdas)
         x = x + self.mlp(norm(x))
@@ -223,7 +221,9 @@ def next_multiple_of_n(v: float | int, *, n: int):
 class GPT(nn.Module):
     def __init__(self, vocab_size: int, num_layers: int, num_heads: int, model_dim: int, max_seq_len: int):
         super().__init__()
-        self.embed = nn.Embedding(vocab_size, model_dim)
+        self.embed0 = nn.Embedding(vocab_size, model_dim)
+        self.embed1 = nn.Embedding(vocab_size, model_dim)
+        self.embed2 = nn.Embedding(vocab_size, model_dim)
         # token value embeddings by @KoszarskyB - inspired by @Grad62304977's value residual implementation following https://arxiv.org/abs/2410.17897
         # value embedding code simplification inspired by @ragulpr https://github.com/KellerJordan/modded-nanogpt/pull/78
         self.value_embeds = nn.ModuleList([nn.Embedding(vocab_size, model_dim) for _ in range(3)])
@@ -235,7 +235,7 @@ class GPT(nn.Module):
         assert num_layers % 2 == 0
         self.scalars = nn.Parameter(torch.cat([
             torch.ones(num_layers), # skip_weights
-            *[torch.tensor([1.0, 0.0]) for _ in range(num_layers)], # block lambdas
+            *[torch.tensor([1.0, 0.0, 0.0, 0.0]) for _ in range(num_layers)], # block lambdas
             *[torch.tensor([0.5, 0.5]) for _ in range(num_layers)], # SA lambdas
         ]))
 
@@ -291,7 +291,9 @@ class GPT(nn.Module):
         block_masks = [long_bm, short_bm, short_bm, short_bm, long_bm, short_bm, short_bm, short_bm, short_bm, short_bm, short_bm, long_bm, short_bm, short_bm, short_bm, long_bm]
         assert len(block_masks) == len(self.blocks)
 
-        x = x0 = norm(self.embed(input_seq)[None]) # use of norm here by @Grad62304977
+        x = x00 = norm(self.embed0(input_seq)[None]) # use of norm here by @Grad62304977
+        x01 = norm(self.embed1(input_seq)[None])
+        x02 = norm(self.embed2(input_seq)[None])
 
         skip_connections = []
         skip_map = {
@@ -300,12 +302,12 @@ class GPT(nn.Module):
             11: 2,
         }
         skip_weights = self.scalars[:len(self.blocks)]
-        lambdas = self.scalars[1 * len(self.blocks): 3 * len(self.blocks)].view(-1, 2)
-        sa_lambdas = self.scalars[3 * len(self.blocks): 5 * len(self.blocks)].view(-1, 2)
+        lambdas = self.scalars[1 * len(self.blocks): 5 * len(self.blocks)].view(-1, 4)
+        sa_lambdas = self.scalars[5 * len(self.blocks): 7 * len(self.blocks)].view(-1, 2)
         for i in range(len(self.blocks)):
             if i in skip_map:
                 x = x + skip_weights[skip_map[i]] * skip_connections[skip_map[i]]
-            x = self.blocks[i](x, ve[i], x0, block_masks[i], lambdas[i], sa_lambdas[i])
+            x = self.blocks[i](x, ve[i], x00, x01, x02, block_masks[i], lambdas[i], sa_lambdas[i])
             skip_connections.append(x)
 
         x = norm(x)
@@ -386,8 +388,8 @@ master_process = (rank == 0) # this process will do logging, checkpointing etc.
 # begin logging
 if master_process:
     run_id_full = f"{run_id:03d}_{uuid.uuid4()}"
-    os.makedirs("logs", exist_ok=True)
-    logfile = f"../logs/{run_id_full}.txt"
+    os.makedirs("../logs/1-x00-x01-x02", exist_ok=True)
+    logfile = f"../logs/1-x00-x01-x02/{run_id_full}.txt"
     print(logfile)
 def print0(s, console=False):
     if master_process:
@@ -408,9 +410,6 @@ def nvidia_smi():
 print0(nvidia_smi())
 print0("="*100)
 
-if master_process:
-    t0 = perf_counter()
-
 ########################################
 #    Construct model and optimizer     #
 ########################################
@@ -425,7 +424,12 @@ for param in model.parameters():
 
 # collect the parameters to optimize
 hidden_matrix_params = sorted((p for p in model.blocks.parameters() if p.ndim >= 2), key=lambda x: x.size(), reverse=True)
-embed_params = [*model.embed.parameters(), *model.value_embeds.parameters()]
+embed_params = [
+    *model.embed0.parameters(),
+    *model.embed1.parameters(),
+    *model.embed2.parameters(),
+    *model.value_embeds.parameters(),
+]
 scalar_params = [model.scalars]
 head_params: list[nn.Parameter] = [model.lm_head_w]
 # sanity check
@@ -492,9 +496,6 @@ for opt, opt_state in zip(optimizers, initial_state["optimizers"]):
     opt.load_state_dict(opt_state)
 del initial_state
 
-if master_process:
-    print0(f"warmup_time:{perf_counter() - t0:.0f}")
-
 ########################################
 #        Training and validation       #
 ########################################
@@ -529,6 +530,16 @@ for step in range(train_steps + 1):
         del val_loader
         dist.all_reduce(val_loss, op=dist.ReduceOp.AVG)
         print0(f"step:{step}/{train_steps} val_loss:{val_loss:.6f} train_time:{training_time_ms:.0f}ms step_avg:{training_time_ms/max(step, 1):.2f}ms", console=True)
+        skip_weights = model.scalars[:len(model.blocks)]
+        lambdas = model.scalars[1 * len(model.blocks): 5 * len(model.blocks)].view(-1, 4)
+        sa_lambdas = model.scalars[5 * len(model.blocks): 7 * len(model.blocks)].view(-1, 2)
+        print0(f"step:{step}/{train_steps} x_lambdas:{lambdas[:, 0].tolist()}", console=True)
+        print0(f"step:{step}/{train_steps} x00_lambdas:{lambdas[:, 1].tolist()}", console=True)
+        print0(f"step:{step}/{train_steps} x01_lambdas:{lambdas[:, 2].tolist()}", console=True)
+        print0(f"step:{step}/{train_steps} x02_lambdas:{lambdas[:, 3].tolist()}", console=True)
+        print0(f"step:{step}/{train_steps} unet_lambdas:{skip_weights.tolist()}", console=True)
+        print0(f"step:{step}/{train_steps} v_lambdas:{sa_lambdas[:, 0].tolist()}", console=True)
+        print0(f"step:{step}/{train_steps} ve_lambdas:{sa_lambdas[:, 1].tolist()}", console=True)
         model.train()
         # start the clock again
         dist.barrier()
