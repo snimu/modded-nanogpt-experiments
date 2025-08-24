@@ -377,7 +377,7 @@ class GPT(nn.Module):
         inputs = [x, x00, x01, ve[0], ve[1], ve[2]]
         for name, input_ in zip(names, inputs):
             try:
-                logits = F.linear(input_.flatten(end_dim=1)[:32], self.lm_head_w.bfloat16()).float()
+                logits = F.linear(input_[:32], self.lm_head_w.bfloat16()).float()
             except RuntimeError:
                 print(f"{name}: {input_.shape=}")
                 raise
