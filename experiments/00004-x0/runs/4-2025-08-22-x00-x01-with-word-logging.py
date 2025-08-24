@@ -376,20 +376,22 @@ class GPT(nn.Module):
         names = ["x", "x00", "x01", "ve0", "ve1", "ve2"]
         inputs = [x, x00, x01, ve[0], ve[1], ve[2]]
         for name, input_ in zip(names, inputs):
-            try:
-                logits = F.linear(input_[:32], self.lm_head_w.bfloat16()).float()
-            except RuntimeError:
-                print(f"{name}: {input_.shape=}")
-                raise
-            distribution = F.softmax(15 * logits * torch.rsqrt(logits.square() + 225), dim=-1)
+            logits = F.linear(input_[:32], self.lm_head_w.bfloat16()).float()
+            distribution = F.softmax(15 * logits * torch.rsqrt(logits.square() + 225), dim=-1).squeeze()
             topk = torch.topk(distribution, k=k)
-            predictions[name] = {
-                i: {
-                    topk.values[i][j].item(): enc.decode([topk.indices[i][j]])
-                    for j in range(k)
-                }
-                for i in range(topk.indices.size(0))
-            }  # example: {0: {0.7: 'blue', 0.08: 'green', 0.05: 'red'}, 1: ...}
+            try:
+                predictions[name] = {
+                    i: {
+                        topk.values[i][j].item(): enc.decode([topk.indices[i][j]])
+                        for j in range(k)
+                    }
+                    for i in range(topk.indices.size(0))
+                }  # example: {0: {0.7: 'blue', 0.08: 'green', 0.05: 'red'}, 1: ...}
+            except  RuntimeError:
+                print(f"{name=}")
+                print(f"{topk.indices.size()=}")
+                print(f"{topk.values.size()=}")
+                raise
         norms = {
             "x": x_norms,
             "ve0": torch.linalg.norm(ve[0]),
