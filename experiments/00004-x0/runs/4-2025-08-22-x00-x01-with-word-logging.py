@@ -380,6 +380,7 @@ class GPT(nn.Module):
                 logits = F.linear(input_.flatten(end_dim=1)[:32], self.lm_head_w.bfloat16()).float()
             except RuntimeError:
                 print(f"{name}: {input_.shape=}")
+                raise
             distribution = F.softmax(15 * logits * torch.rsqrt(logits.square() + 225), dim=-1)
             topk = torch.topk(distribution, k=k)
             predictions[name] = {
