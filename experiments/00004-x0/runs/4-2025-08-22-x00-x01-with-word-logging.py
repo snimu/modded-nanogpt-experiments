@@ -376,7 +376,10 @@ class GPT(nn.Module):
         names = ["x", "x00", "x01", "ve0", "ve1", "ve2"]
         inputs = [x, x00, x01, ve[0], ve[1], ve[2]]
         for name, input_ in zip(names, inputs):
-            logits = F.linear(input_.flatten(end_dim=1)[:32], self.lm_head_w.bfloat16()).float()
+            try:
+                logits = F.linear(input_.flatten(end_dim=1)[:32], self.lm_head_w.bfloat16()).float()
+            except RuntimeError:
+                print(f"{name}: {input_.shape=}")
             distribution = F.softmax(15 * logits * torch.rsqrt(logits.square() + 225), dim=-1)
             topk = torch.topk(distribution, k=k)
             predictions[name] = {
