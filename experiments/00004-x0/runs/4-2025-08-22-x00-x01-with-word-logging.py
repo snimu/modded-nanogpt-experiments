@@ -325,6 +325,7 @@ class GPT(nn.Module):
             loss += F.cross_entropy(15 * logits * torch.rsqrt(logits.square() + 225), target_seq.chunk(4)[i]) / 4
         return loss
 
+    @torch.compile
     def forward_with_logging(self, input_seq: Tensor, target_seq: Tensor, sliding_window_num_blocks: Tensor, extra_logging: bool = False):
         assert input_seq.ndim == 1
 
