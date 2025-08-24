@@ -321,7 +321,7 @@ class GPT(nn.Module):
         
         if extra_logging:  # calculate the cosine similarities between all kinds of inputs
             def cossim(x1: Tensor, x2: Tensor):
-                return st.util.cossim(x1, x2).mean().item()
+                return st.util.cos_sim(x1, x2).mean().item()
             xx_cossims = [0.0]
             for idx in range(len(x_cache) - 1):
                 x_source = x_cache[idx]
