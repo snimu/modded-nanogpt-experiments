@@ -382,7 +382,7 @@ class GPT(nn.Module):
             predictions[name] = {
                 i: {probs[j]: enc.decode([toks[j]]) for j in range(k)}
                 for i, toks, probs in enumerate(
-                    zip(topk.indices.tolist(), topk.values.tolist())
+                    zip(topk.indices.tolist(), topk.values.tolist(), strict=True)
                 )
             }  # example: {0: {0.7: 'blue', 0.08: 'green', 0.05: 'red'}, 1: ...}
         norms = {
