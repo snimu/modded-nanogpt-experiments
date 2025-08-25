@@ -397,8 +397,8 @@ class GPT(nn.Module):
         # Return the tokens as a dict from index to decoded token.
         # Also return a dictionary of next-token predictions from different vectors.
         # Those are a dict from index to another dict,
-        #   which represents the top-3 results as a map from probability to token
-        k = 3  # we're using top-3
+        #   which represents the top-k results as a map from probability to token
+        k = 10  # we're using top-10
         enc = tiktoken.encoding_for_model("gpt2")
         tokens = {i: enc.decode([tok]) for i, tok in enumerate(input_seq[:32])}
         predictions = dict()
@@ -414,7 +414,7 @@ class GPT(nn.Module):
                         topk.values[i][j].item(): enc.decode([topk.indices[i][j]])
                         for j in range(k)
                     }
-                    for i in range(topk.indices.size(0))
+                    for i in range(32)
                 }  # example: {0: {0.7: 'blue', 0.08: 'green', 0.05: 'red'}, 1: ...}
             except  RuntimeError:
                 print(f"{name=}")
