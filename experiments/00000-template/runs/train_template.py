@@ -19,7 +19,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 
-os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+os.environ["PYTORCH_ALLOC_CONF"] = "expandable_segments:True"
 import torch
 torch.empty(1, device="cuda", requires_grad=True).backward() # prevents a bug on some systems
 from torch import Tensor, nn
@@ -28,7 +28,6 @@ import torch.distributed as dist
 # use of FlexAttention contributed by @KoszarskyB
 from torch.nn.attention.flex_attention import BlockMask, flex_attention
 torch._inductor.config.coordinate_descent_tuning = True # we have banned this flag for new records because it causes compilation to take 30min
-# torch._dynamo.config.compiled_autograd = True
 
 # -----------------------------------------------------------------------------
 # Muon optimizer
@@ -476,7 +475,8 @@ model: nn.Module = torch.compile(model, dynamic=False)
 # Warmup the training kernels, then re-initialize the state so we aren't cheating
 warmup_steps = 10
 initial_state = copy.deepcopy(dict(model=model.state_dict(), optimizers=[opt.state_dict() for opt in optimizers]))
-for _ in range(warmup_steps):
+for wu_step in range(warmup_steps):
+    print0(f"Warmup step {wu_step+1}/{warmup_steps}")
     inputs = targets = torch.randint(0, args.vocab_size, size=(args.train_seq_len,), device="cuda")
     model(inputs.to(torch.int32), targets, get_window_size_blocks(0)).backward()
     for param in model.parameters():
