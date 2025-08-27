@@ -11,8 +11,8 @@ def extract_vallosses(subdir: str, name: str, offset: int = 0):
         with open(os.path.join(subdir, file), "r") as f:
             lines = f.readlines()
         lines = [line for line in lines if "val_loss" in line]
-
-        results += f"{title}\n\n{'\n'.join(lines)}\n\n"
+        trace = '\n'.join(lines)
+        results += f"{title}\n\n{trace}\n\n"
 
     return results
 
