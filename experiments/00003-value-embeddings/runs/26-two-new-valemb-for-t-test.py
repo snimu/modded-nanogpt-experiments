@@ -388,8 +388,8 @@ master_process = (rank == 0) # this process will do logging, checkpointing etc.
 # begin logging
 if master_process:
     run_id_full = f"{run_id:03d}_{uuid.uuid4()}"
-    os.makedirs("../logs/16-new-valemb-3-14-4-15", exist_ok=True)
-    logfile = f"../logs/16-new-valemb-3-14-4-15/{run_id_full}.txt"
+    os.makedirs("../logs/26-two-new-valemb-for-t-test", exist_ok=True)
+    logfile = f"../logs/26-two-new-valemb-for-t-test/{run_id_full}.txt"
     print(logfile)
 def print0(s, console=False):
     if master_process:
