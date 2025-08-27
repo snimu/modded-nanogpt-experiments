@@ -8,7 +8,7 @@ def extract_vallosses(subdir: str, name: str, offset: int = 0):
     results = ""
     for i, file in enumerate(files):
         title = f"## {name} {i + offset}"
-        with open(os.path.join("logs" / subdir, file), "r") as f:
+        with open(os.path.join("logs/" + subdir, file), "r") as f:
             lines = f.readlines()
         lines = [line for line in lines if "val_loss" in line]
         trace = '\n'.join(lines)
