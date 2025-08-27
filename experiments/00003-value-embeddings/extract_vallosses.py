@@ -4,11 +4,11 @@ import os
 
 
 def extract_vallosses(subdir: str, name: str, offset: int = 0):
-    files = sorted(os.listdir(subdir))
+    files = sorted(os.listdir("logs/" + subdir))
     results = ""
     for i, file in enumerate(files):
         title = f"## {name} {i + offset}"
-        with open(os.path.join(subdir, file), "r") as f:
+        with open(os.path.join("logs" / subdir, file), "r") as f:
             lines = f.readlines()
         lines = [line for line in lines if "val_loss" in line]
         trace = '\n'.join(lines)
@@ -26,5 +26,5 @@ if __name__ == "__main__":
 
     results = extract_vallosses(args.subdir, args.name, args.offset)
 
-    with open(f"{args.subdir}/vallosses-{args.name}.md", "w") as f:
+    with open(f"logs/{args.subdir}/vallosses-{args.name}.md", "w") as f:
         f.write(results)
