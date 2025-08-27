@@ -10,7 +10,7 @@ def extract_vallosses(subdir: str, name: str, offset: int = 0):
         title = f"## {name} {i + offset}"
         with open(os.path.join("logs/" + subdir, file), "r") as f:
             lines = f.readlines()
-        lines = [line for line in lines if "val_loss" in line]
+        lines = [line.strip() for line in lines if "val_loss" in line and line.startswith("step:") and line.strip()]
         trace = '\n'.join(lines)
         results += f"{title}\n\n{trace}\n\n"
 
