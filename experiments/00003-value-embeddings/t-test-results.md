@@ -367,6 +367,7 @@ step:5500/5800 val_loss:2.929498 train_time:1342803ms step_avg:244.15ms
 step:5625/5800 val_loss:2.924226 train_time:1374924ms step_avg:244.43ms
 step:5750/5800 val_loss:2.920458 train_time:1407371ms step_avg:244.76ms
 step:5800/5800 val_loss:2.919901 train_time:1420331ms step_avg:244.88ms
+
 ### 26 7
 
 step:0/5800 val_loss:10.825840 train_time:0ms step_avg:0.19ms
