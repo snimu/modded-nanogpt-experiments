@@ -186,6 +186,12 @@ class CausalSelfAttention(nn.Module):
         y = y.contiguous().view(B, T, self.num_heads * self.head_dim) # re-assemble all head outputs side by side
         y = F.linear(y, self.qkvo_w[3])
         return y
+    
+    def make_v_for_logging(self, x: Tensor, ve: Tensor, lambdas: Tensor):
+        B, T = x.size(0), x.size(1) # batch size, sequence length
+        assert B == 1, "Must use batch size = 1 for FlexAttention"
+        q, k, v = F.linear(x, self.qkvo_w[:3].flatten(end_dim=1)).view(B, T, 3 * self.num_heads, self.head_dim).chunk(3, dim=-2)
+        return norm(v) * lambdas[0], ve.view_as(v) * lambdas[1]
 
 class MLP(nn.Module):
     def __init__(self, dim: int):
@@ -361,8 +367,13 @@ class GPT(nn.Module):
             skip_connections.append(x)
         
         def cossim(x1: Tensor, x2: Tensor):
-            return st.util.cos_sim(x1.squeeze(), x2.squeeze()).mean().item()
-        xx_cossims = [0.0]
+            cs = st.util.cos_sim(x1.squeeze(), x2.squeeze())
+            # Only use the cos-sim for the diagonal elements
+            # So the cossim between vectors at the same position
+            cs = cs * torch.eye(x1.squeeze().size(0))  # null irrelevant elements
+            cs = cs.sum(dim=-1).mean()  # remove the nulls via sum, then take mean
+            return cs.item()
+        xx_cossims = [1.0]  # first element has cossim 1.0 with previous one, per definition
         for idx in range(len(x_cache) - 1):
             x_source = x_cache[idx]
             x_target = x_cache[idx]
@@ -374,6 +385,19 @@ class GPT(nn.Module):
         for x_source in x_cache:
             x01x_cossims.append(cossim(x_source, x01))
         x00x01_cossim = cossim(x00, x01)
+        blocks: list[Block] = [block for block in self.blocks]
+        vs = [
+            blocks[i].attn.make_v_for_logging(x_cache[i], ve[j], sa_lambdas[i])
+            for i, j in zip([0, 1, 2, 13, 14, 15], [0, 1, 2, 0, 1, 2])
+        ]
+        v_ve_cossim_map = {
+            0: cossim(vs[0][0], vs[0][1]),
+            1: cossim(vs[1][0], vs[1][1]),
+            2: cossim(vs[2][0], vs[2][1]),
+            13: cossim(vs[3][0], vs[3][1]),
+            14: cossim(vs[4][0], vs[4][1]),
+            15: cossim(vs[5][0], vs[5][1]),
+        }
         x_ve_cossim_map = {
             0: cossim(x_cache[0], ve[0]),
             1: cossim(x_cache[1], ve[1]),
@@ -423,6 +447,8 @@ class GPT(nn.Module):
                 raise
         norms = {
             "x": x_norms,
+            "x00": torch.linalg.norm(x00),
+            "x01": torch.linalg.norm(x01),
             "ve0": torch.linalg.norm(ve[0]),
             "ve1": torch.linalg.norm(ve[1]),
             "ve2": torch.linalg.norm(ve[2]),
@@ -433,6 +459,7 @@ class GPT(nn.Module):
             "x-x01": x01x_cossims,
             "x00-x01": x00x01_cossim,
             "x-ve": x_ve_cossim_map,
+            "v-ve": v_ve_cossim_map,
             "ve0-ve1": ve0ve1_cossim,
             "ve0-ve2": ve0ve2_cossim,
             "ve1-ve2": ve1ve2_cossim,
