@@ -191,7 +191,9 @@ class CausalSelfAttention(nn.Module):
         B, T = x.size(0), x.size(1) # batch size, sequence length
         assert B == 1, "Must use batch size = 1 for FlexAttention"
         q, k, v = F.linear(x, self.qkvo_w[:3].flatten(end_dim=1)).view(B, T, 3 * self.num_heads, self.head_dim).chunk(3, dim=-2)
-        return norm(v) * lambdas[0], ve.view_as(v) * lambdas[1]
+        v, ve = norm(v) * lambdas[0], ve.view_as(v) * lambdas[1]
+        return v, ve, F.linear(v, self.qkvo_w[3]), F.linear(ve, self.qkvo_w[3])
+
 
 class MLP(nn.Module):
     def __init__(self, dim: int):
@@ -387,7 +389,7 @@ class GPT(nn.Module):
         x00x01_cossim = cossim(x00, x01)
         blocks: list[Block] = [block for block in self.blocks]
         vs = [
-            blocks[i].attn.make_v_for_logging(x_cache[i], ve[j], sa_lambdas[i])
+            list(blocks[i].attn.make_v_for_logging(x_cache[i], ve[j], sa_lambdas[i]))[:2]
             for i, j in zip([0, 1, 2, 13, 14, 15], [0, 1, 2, 0, 1, 2])
         ]
         v_ve_cossim_map = {
@@ -426,8 +428,14 @@ class GPT(nn.Module):
         enc = tiktoken.encoding_for_model("gpt2")
         tokens = {i: enc.decode([tok]) for i, tok in enumerate(input_seq[:32])}
         predictions = dict()
-        names = ["x", "x00", "x01", "ve0", "ve1", "ve2"]
-        inputs = [x, x00, x01, ve[0], ve[1], ve[2]]
+        _, _, _, ve0_o0 = self.blocks[0].attn.make_v_for_logging(x, ve[0], sa_lambdas[0])
+        _, _, ve0_13 = self.blocks[13].attn.make_v_for_logging(x, ve[0], sa_lambdas[0])
+        _, _, ve1_o1 = self.blocks[1].attn.make_v_for_logging(x, ve[1], sa_lambdas[1])
+        _, _, ve1_14 = self.blocks[14].attn.make_v_for_logging(x, ve[1], sa_lambdas[1])
+        _, _, ve2_o2 = self.blocks[2].attn.make_v_for_logging(x, ve[2], sa_lambdas[2])
+        _, _, ve2_15 = self.blocks[15].attn.make_v_for_logging(x, ve[2], sa_lambdas[2])
+        names = ["x", "x00", "x01", "ve0", "ve1", "ve2", "ve0_o0", "ve1_o1", "ve2_o2", "ve0_13", "ve1_14", "ve2_15"]
+        inputs = [x, x00, x01, ve[0], ve[1], ve[2], ve0_o0, ve1_o1, ve2_o2, ve0_13, ve1_14, ve2_15]
         for name, input_ in zip(names, inputs):
             logits = F.linear(input_[:32], self.lm_head_w.bfloat16()).float()
             distribution = F.softmax(15 * logits * torch.rsqrt(logits.square() + 225), dim=-1).squeeze()
