@@ -372,7 +372,7 @@ class GPT(nn.Module):
             cs = st.util.cos_sim(x1.squeeze(), x2.squeeze())
             # Only use the cos-sim for the diagonal elements
             # So the cossim between vectors at the same position
-            cs = cs * torch.eye(x1.squeeze().size(0))  # null irrelevant elements
+            cs = cs * torch.eye(x1.squeeze().size(0)).to(device=cs.device, dtype=cs.dtype)  # null irrelevant elements
             cs = cs.sum(dim=-1).mean()  # remove the nulls via sum, then take mean
             return cs.item()
         xx_cossims = [1.0]  # first element has cossim 1.0 with previous one, per definition
