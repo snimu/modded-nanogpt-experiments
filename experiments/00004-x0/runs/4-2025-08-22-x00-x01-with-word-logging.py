@@ -192,6 +192,8 @@ class CausalSelfAttention(nn.Module):
         assert B == 1, "Must use batch size = 1 for FlexAttention"
         q, k, v = F.linear(x, self.qkvo_w[:3].flatten(end_dim=1)).view(B, T, 3 * self.num_heads, self.head_dim).chunk(3, dim=-2)
         v, ve = norm(v) * lambdas[0], ve.view_as(v) * lambdas[1]
+        v = v.contiguous().view(B, T, self.num_heads * self.head_dim)
+        ve = ve.contiguous().view(B, T, self.num_heads * self.head_dim)
         return v, ve, F.linear(v, self.qkvo_w[3]), F.linear(ve, self.qkvo_w[3])
 
 
