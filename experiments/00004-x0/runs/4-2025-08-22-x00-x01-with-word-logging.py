@@ -336,7 +336,13 @@ class GPT(nn.Module):
         return loss
 
     @torch.compile
-    def forward_with_logging(self, input_seq: Tensor, target_seq: Tensor, sliding_window_num_blocks: Tensor, extra_logging: bool = False):
+    def forward_with_logging(
+            self,
+            input_seq: Tensor,
+            sliding_window_num_blocks: Tensor,
+            num_predicted: int = 32,
+            topk: int = 10,
+    ):
         assert input_seq.ndim == 1
 
         ve = [value_embed(input_seq) for value_embed in self.value_embeds]
@@ -369,56 +375,6 @@ class GPT(nn.Module):
             x_cache.append(x)  # save here instead of using skip_connections
             x = self.blocks[i](x, ve[i], x00, x01, block_masks[i], lambdas[i], sa_lambdas[i])
             skip_connections.append(x)
-        
-        def cossim(x1: Tensor, x2: Tensor):
-            cs = st.util.cos_sim(x1.squeeze(), x2.squeeze())
-            # Only use the cos-sim for the diagonal elements
-            # So the cossim between vectors at the same position
-            cs = cs * torch.eye(x1.squeeze().size(0)).to(device=cs.device, dtype=cs.dtype)  # null irrelevant elements
-            cs = cs.sum(dim=-1).mean()  # remove the nulls via sum, then take mean
-            return cs.item()
-        xx_cossims = [1.0]  # first element has cossim 1.0 with previous one, per definition
-        for idx in range(len(x_cache) - 1):
-            x_source = x_cache[idx]
-            x_target = x_cache[idx]
-            xx_cossims.append(cossim(x_source, x_target))
-        x00x_cossims = []
-        for x_source in x_cache:
-            x00x_cossims.append(cossim(x_source, x00))
-        x01x_cossims = []
-        for x_source in x_cache:
-            x01x_cossims.append(cossim(x_source, x01))
-        x00x01_cossim = cossim(x00, x01)
-        blocks: list[Block] = [block for block in self.blocks]
-        vs = [
-            list(blocks[i].attn.make_v_for_logging(x_cache[i], ve[j], sa_lambdas[i]))[:2]
-            for i, j in zip([0, 1, 2, 13, 14, 15], [0, 1, 2, 0, 1, 2])
-        ]
-        v_ve_cossim_map = {
-            0: cossim(vs[0][0], vs[0][1]),
-            1: cossim(vs[1][0], vs[1][1]),
-            2: cossim(vs[2][0], vs[2][1]),
-            13: cossim(vs[3][0], vs[3][1]),
-            14: cossim(vs[4][0], vs[4][1]),
-            15: cossim(vs[5][0], vs[5][1]),
-        }
-        x_ve_cossim_map = {
-            0: cossim(x_cache[0], ve[0]),
-            1: cossim(x_cache[1], ve[1]),
-            2: cossim(x_cache[2], ve[2]),
-            13: cossim(x_cache[13], ve[0]),
-            14: cossim(x_cache[14], ve[1]),
-            15: cossim(x_cache[15], ve[2]),
-        }
-        ve0ve1_cossim = cossim(ve[0], ve[1])
-        ve0ve2_cossim = cossim(ve[0], ve[2])
-        ve1ve2_cossim = cossim(ve[1], ve[2])
-        ve0x00_cossim = cossim(ve[0], x00)
-        ve0x01_cossim = cossim(ve[0], x01)
-        ve1x00_cossim = cossim(ve[1], x00)
-        ve1x01_cossim = cossim(ve[1], x01)
-        ve2x00_cossim = cossim(ve[2], x00)
-        ve2x01_cossim = cossim(ve[2], x01)
 
         x = norm(x)
 
@@ -426,29 +382,34 @@ class GPT(nn.Module):
         # Also return a dictionary of next-token predictions from different vectors.
         # Those are a dict from index to another dict,
         #   which represents the top-k results as a map from probability to token
-        k = 10  # we're using top-10
         enc = tiktoken.encoding_for_model("gpt2")
-        tokens = {i: enc.decode([tok]) for i, tok in enumerate(input_seq[:32])}
+        tokens = {i: enc.decode([tok]) for i, tok in enumerate(input_seq[:num_predicted])}
         predictions = dict()
         _, _, _, ve0_o0 = self.blocks[0].attn.make_v_for_logging(x, ve[0], sa_lambdas[0])
-        _, _, ve0_13 = self.blocks[13].attn.make_v_for_logging(x, ve[0], sa_lambdas[0])
+        _, _, ve0_o13 = self.blocks[13].attn.make_v_for_logging(x, ve[0], sa_lambdas[0])
         _, _, ve1_o1 = self.blocks[1].attn.make_v_for_logging(x, ve[1], sa_lambdas[1])
-        _, _, ve1_14 = self.blocks[14].attn.make_v_for_logging(x, ve[1], sa_lambdas[1])
+        _, _, ve1_o14 = self.blocks[14].attn.make_v_for_logging(x, ve[1], sa_lambdas[1])
         _, _, ve2_o2 = self.blocks[2].attn.make_v_for_logging(x, ve[2], sa_lambdas[2])
-        _, _, ve2_15 = self.blocks[15].attn.make_v_for_logging(x, ve[2], sa_lambdas[2])
-        names = ["x", "x00", "x01", "ve0", "ve1", "ve2", "ve0_o0", "ve1_o1", "ve2_o2", "ve0_13", "ve1_14", "ve2_15"]
-        inputs = [x, x00, x01, ve[0], ve[1], ve[2], ve0_o0, ve1_o1, ve2_o2, ve0_13, ve1_14, ve2_15]
+        _, _, ve2_o15 = self.blocks[15].attn.make_v_for_logging(x, ve[2], sa_lambdas[2])
+        names = (
+            [f"x-{i}" for i in range(len(x_cache))]
+            + [
+                "x-out", "x00", "x01", "ve0", "ve1", "ve2",
+                "ve0_o0", "ve1_o1", "ve2_o2", "ve0_o13", "ve1_o14", "ve2_o15"
+            ]
+        )
+        inputs = x_cache + [x, x00, x01, ve[0], ve[1], ve[2], ve0_o0, ve1_o1, ve2_o2, ve0_o13, ve1_o14, ve2_o15]
         for name, input_ in zip(names, inputs):
-            logits = F.linear(input_[:32], self.lm_head_w.bfloat16()).float()
+            logits = F.linear(input_[:num_predicted], self.lm_head_w.bfloat16()).float()
             distribution = F.softmax(15 * logits * torch.rsqrt(logits.square() + 225), dim=-1).squeeze()
-            topk = torch.topk(distribution, k=k)
+            topk = torch.topk(distribution, k=topk)
             try:
                 predictions[name] = {
                     i: {
                         topk.values[i][j].item(): enc.decode([topk.indices[i][j]])
-                        for j in range(k)
+                        for j in range(topk)
                     }
-                    for i in range(32)
+                    for i in range(num_predicted)
                 }  # example: {0: {0.7: 'blue', 0.08: 'green', 0.05: 'red'}, 1: ...}
             except  RuntimeError:
                 print(f"{name=}")
@@ -463,24 +424,7 @@ class GPT(nn.Module):
             "ve1": torch.linalg.norm(ve[1]),
             "ve2": torch.linalg.norm(ve[2]),
         }
-        cossims = {
-            "x-x": xx_cossims,
-            "x-x00": x00x_cossims,
-            "x-x01": x01x_cossims,
-            "x00-x01": x00x01_cossim,
-            "x-ve": x_ve_cossim_map,
-            "v-ve": v_ve_cossim_map,
-            "ve0-ve1": ve0ve1_cossim,
-            "ve0-ve2": ve0ve2_cossim,
-            "ve1-ve2": ve1ve2_cossim,
-            "ve0-x00": ve0x00_cossim,
-            "ve1-x00": ve1x00_cossim,
-            "ve2-x00": ve2x00_cossim,
-            "ve0-x01": ve0x01_cossim,
-            "ve1-x01": ve1x01_cossim,
-            "ve2-x01": ve2x01_cossim,
-        }
-        return tokens, predictions, norms, cossims
+        return tokens, predictions, norms
 
 # -----------------------------------------------------------------------------
 # Our own simple Distributed Data Loader
@@ -741,11 +685,10 @@ if last_step:
     inputs, targets = next(train_loader)
     model.eval()
     with torch.no_grad():
-        tokens, predictions, x_norms, cossims = model.forward_with_logging(inputs, targets, get_window_size_blocks(0), extra_logging=True)
+        tokens, predictions, x_norms = model.forward_with_logging(inputs, targets, get_window_size_blocks(0), extra_logging=True)
     print0(f"{tokens=}", console=True)
     print0(f"{predictions=}", console=True)
     print0(f"{x_norms=}", console=True)
-    print0(f"{cossims=}", console=True)
 print0(f"peak memory allocated: {torch.cuda.max_memory_allocated() // 1024 // 1024} MiB "
     f"reserved: {torch.cuda.max_memory_reserved() // 1024 // 1024} MiB", console=True)
 dist.destroy_process_group()
