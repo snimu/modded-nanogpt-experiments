@@ -402,19 +402,19 @@ class GPT(nn.Module):
         for name, input_ in zip(names, inputs):
             logits = F.linear(input_[:num_predicted], self.lm_head_w.bfloat16()).float()
             distribution = F.softmax(15 * logits * torch.rsqrt(logits.square() + 225), dim=-1).squeeze()
-            topk = torch.topk(distribution, k=topk)
+            distr_topk = torch.topk(distribution, k=topk)
             try:
                 predictions[name] = {
                     i: {
-                        topk.values[i][j].item(): enc.decode([topk.indices[i][j]])
+                        distr_topk.values[i][j].item(): enc.decode([distr_topk.indices[i][j]])
                         for j in range(topk)
                     }
                     for i in range(num_predicted)
                 }  # example: {0: {0.7: 'blue', 0.08: 'green', 0.05: 'red'}, 1: ...}
             except  RuntimeError:
                 print(f"{name=}")
-                print(f"{topk.indices.size()=}")
-                print(f"{topk.values.size()=}")
+                print(f"{distr_topk.indices.size()=}")
+                print(f"{distr_topk.values.size()=}")
                 raise
         norms = {
             "x": x_norms,
