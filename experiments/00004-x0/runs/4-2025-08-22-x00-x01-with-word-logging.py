@@ -386,11 +386,11 @@ class GPT(nn.Module):
         tokens = {i: enc.decode([tok]) for i, tok in enumerate(input_seq[:num_predicted])}
         predictions = dict()
         _, _, _, ve0_o0 = self.blocks[0].attn.make_v_for_logging(x, ve[0], sa_lambdas[0])
-        _, _, ve0_o13 = self.blocks[13].attn.make_v_for_logging(x, ve[0], sa_lambdas[0])
-        _, _, ve1_o1 = self.blocks[1].attn.make_v_for_logging(x, ve[1], sa_lambdas[1])
-        _, _, ve1_o14 = self.blocks[14].attn.make_v_for_logging(x, ve[1], sa_lambdas[1])
-        _, _, ve2_o2 = self.blocks[2].attn.make_v_for_logging(x, ve[2], sa_lambdas[2])
-        _, _, ve2_o15 = self.blocks[15].attn.make_v_for_logging(x, ve[2], sa_lambdas[2])
+        _, _, _, ve0_o13 = self.blocks[13].attn.make_v_for_logging(x, ve[0], sa_lambdas[0])
+        _, _, _, ve1_o1 = self.blocks[1].attn.make_v_for_logging(x, ve[1], sa_lambdas[1])
+        _, _, _, ve1_o14 = self.blocks[14].attn.make_v_for_logging(x, ve[1], sa_lambdas[1])
+        _, _, _, ve2_o2 = self.blocks[2].attn.make_v_for_logging(x, ve[2], sa_lambdas[2])
+        _, _, _, ve2_o15 = self.blocks[15].attn.make_v_for_logging(x, ve[2], sa_lambdas[2])
         names = (
             [f"x-{i}" for i in range(len(x_cache))]
             + [
