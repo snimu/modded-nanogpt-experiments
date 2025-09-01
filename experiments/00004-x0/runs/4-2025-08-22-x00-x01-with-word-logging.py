@@ -593,7 +593,7 @@ for _ in range(warmup_steps):
 print0("Attempting to generate extra stats (error early in case of issues)")
 model.eval()
 with torch.no_grad():
-    _, _, _, _ = model.forward_with_logging(inputs.to(torch.int32), targets, get_window_size_blocks(0), extra_logging=True)
+    _, _, _ = model.forward_with_logging(inputs.to(torch.int32), get_window_size_blocks(0))
 model.train()
 model.zero_grad(set_to_none=True)
 model.load_state_dict(initial_state["model"])
@@ -685,7 +685,12 @@ if last_step:
     inputs, targets = next(train_loader)
     model.eval()
     with torch.no_grad():
-        tokens, predictions, x_norms = model.forward_with_logging(inputs, targets, get_window_size_blocks(0), extra_logging=True)
+        tokens, predictions, x_norms = model.forward_with_logging(
+            inputs,
+            get_window_size_blocks(0),
+            num_predicted=128,
+            topk=10,
+        )
     print0(f"{tokens=}", console=True)
     print0(f"{predictions=}", console=True)
     print0(f"{x_norms=}", console=True)
