@@ -30,7 +30,7 @@ import torch.distributed as dist
 # use of FlexAttention contributed by @KoszarskyB
 from torch.nn.attention.flex_attention import BlockMask, flex_attention
 torch._inductor.config.coordinate_descent_tuning = True # we have banned this flag for new records because it causes compilation to take 30min
-# torch._dynamo.config.compiled_autograd = True
+torch._dynamo.config.capture_scalar_outputs = True
 
 # -----------------------------------------------------------------------------
 # Muon optimizer
