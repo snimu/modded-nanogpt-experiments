@@ -44,3 +44,6 @@ torchrun --standalone --nproc_per_node=8 24-new-valemb-3-14-4-15-record.py
 torchrun --standalone --nproc_per_node=8 22-baseline-record.py
 torchrun --standalone --nproc_per_node=8 23-new-valemb-3-15-record.py
 torchrun --standalone --nproc_per_node=8 24-new-valemb-3-14-4-15-record.py
+
+torchrun --standalone --nproc-per-node=8 27-2025-09-02-shared-valemb-015-114-213.py
+torchrun --standalone --nproc-per-node=8 28-2025-09-02-shared-valemb-015-114-213-312-411.py

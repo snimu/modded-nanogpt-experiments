@@ -6,8 +6,12 @@ uv pip install --pre torch --index-url https://download.pytorch.org/whl/nightly/
 uv run data/cached_fineweb10B.py
 
 cd runs
+torchrun --standalone --nproc_per_node=8 4-2025-08-22-x00-x01-with-word-logging.py
+
 torchrun --standalone --nproc_per_node=8 0-2025-08-17-x00-x01.py
 torchrun --standalone --nproc_per_node=8 1-2025-08-20-x00-x01-x02.py
 torchrun --standalone --nproc_per_node=8 2-2025-08-21-x00-x01-x02-x03.py
 torchrun --standalone --nproc_per_node=8 3-2025-08-21-x00-x01-x02-x03-x04.py
+torchrun --standalone --nproc_per_node=8 5-2025-08-28-x00-x01-with-extra-valembs.py
 torchrun --standalone --nproc_per_node=8 999-2025-08-20-baseline.py
+torchrun --standalone --nproc_per_node=8 999-2025-08-20-baseline-x00-x01.py
