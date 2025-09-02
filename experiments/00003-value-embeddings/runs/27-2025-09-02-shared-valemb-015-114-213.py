@@ -1,12 +1,3 @@
-"""
-Modified from:
-
-https://github.com/KellerJordan/modded-nanogpt/blob/master/records/042225_GPT2Medium_Record8/075_640429f2-e726-4e83-aa27-684626239ffc.txt
-
-- Removed the _patched_trace_structured function
-- Removed `torch._dynamo.config.compiled_autograd = True`
-- Adapted paths to the new directory structure
-"""
 
 import os
 import sys
@@ -284,7 +275,7 @@ class GPT(nn.Module):
 
         ve = [value_embed(input_seq) for value_embed in self.value_embeds]
         # 012 ... 012 structure on token value embeddings by @YouJiacheng, improved on @leloykun's U-net structure
-        ve = [ve[0], ve[1], ve[2]] + [None] * (len(self.blocks) - 6) + [ve[0], ve[1], ve[2]]
+        ve = [ve[0], ve[1], ve[2]] + [None] * (len(self.blocks) - 6) + [ve[2], ve[1], ve[0]]
         assert len(ve) == len(self.blocks)
 
         long_bm, short_bm = self.create_blockmasks(input_seq, sliding_window_num_blocks)
@@ -386,8 +377,8 @@ master_process = (rank == 0) # this process will do logging, checkpointing etc.
 # begin logging
 if master_process:
     run_id_full = f"{run_id:03d}_{uuid.uuid4()}"
-    os.makedirs("../logs/13-baseline", exist_ok=True)
-    logfile = f"../logs/13-baseline/{run_id_full}.txt"
+    os.makedirs("../logs/27-shared-valemb-015-114-213", exist_ok=True)
+    logfile = f"../logs/27-shared-valemb-015-114-213/{run_id_full}.txt"
     print(logfile)
 def print0(s, console=False):
     if master_process:
