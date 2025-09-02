@@ -1,11 +1,13 @@
 
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def plot_val_loss(
         header_numbers: list[int | str] | dict[int | str, str],
         filename: str,
         x_axis: str = "step",
+        average_over: dict[str, tuple[str, int]] | None = None,
 ):
     with open(filename, "r") as f:
         lines = f.readlines()
@@ -30,6 +32,22 @@ def plot_val_loss(
                 parsed[hnum]["step"].append(int(line.split("step:")[1].split("/")[0]))
                 parsed[hnum]["time"].append(float(line.split("train_time:")[1].split("ms")[0]) / 1000)
     
+    if average_over is not None:
+        header_numbers = list(average_over.keys())
+        descriptions = ["" for _ in header_numbers]
+        new_parsed = {}
+        for hnum in average_over:
+            group = average_over[hnum]
+            steps = parsed[group[0]]["step"]
+            times = np.array([parsed[header]["time"] for header in group])
+            losses = np.array([parsed[header]["loss"] for header in group])
+            new_parsed[hnum] = {
+                "loss": np.mean(losses, axis=0),
+                "step": steps,
+                "time": np.mean(times, axis=0),
+            }
+        parsed = new_parsed
+
     for i, hnum in enumerate(header_numbers):
         description = f": {descriptions[i]}" if descriptions[i] else ""
         plt.plot(parsed[hnum][x_axis], parsed[hnum]["loss"], label=f"{hnum}{description}")
@@ -38,3 +56,15 @@ def plot_val_loss(
     plt.legend()
     plt.grid()
     plt.show()
+
+
+if __name__ == "__main__":
+    plot_val_loss(
+        filename="results.md",
+        header_numbers=[f"3 {i}" for i in range(5)] + [f"0 {i}" for i in range(5)],
+        average_over={
+            "emb-to-lmhead-skip": [f"3 {i}" for i in range(5)],
+            "baseline": [f"0 {i}" for i in range(5)],
+        },
+        x_axis="time",
+    )

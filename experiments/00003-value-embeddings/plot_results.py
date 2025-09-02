@@ -165,61 +165,80 @@ if __name__ == "__main__":
     #     x_axis="time",
     # )
 
-    from rich import print
-    print("## Baseline")
-    print("\n### Final val_losses")
-    final_losses=get_final_val_losses("t-test-results.md", [f"25 {hnum}" for hnum in range(28)])
-    print(f"\n#### Final val_losses\n\n```python\n{final_losses}\n```")
-    final_losses = np.array(final_losses)
+    # from rich import print
+    # print("## Baseline")
+    # print("\n### Final val_losses")
+    # final_losses=get_final_val_losses("t-test-results.md", [f"25 {hnum}" for hnum in range(28)])
+    # print(f"\n#### Final val_losses\n\n```python\n{final_losses}\n```")
+    # final_losses = np.array(final_losses)
 
-    print("\n#### Simple statistics\n")
-    print(f"- Mean:     {np.mean(final_losses):.3f} ± {np.std(final_losses):.3f}")
-    print(f"- Median:   {np.median(final_losses):.3f}")
-    print(f"- Min:      {np.min(final_losses):.3f}")
-    print(f"- Max:      {np.max(final_losses):.3f}")
-    print(f"- # < 2.92: {np.sum(final_losses < 2.92).item():.0f}")
+    # print("\n#### Simple statistics\n")
+    # print(f"- Mean:     {np.mean(final_losses):.3f} ± {np.std(final_losses):.3f}")
+    # print(f"- Median:   {np.median(final_losses):.3f}")
+    # print(f"- Min:      {np.min(final_losses):.3f}")
+    # print(f"- Max:      {np.max(final_losses):.3f}")
+    # print(f"- # < 2.92: {np.sum(final_losses < 2.92).item():.0f}")
 
-    print("\n#### T-test results\n")
-    ttest_results = test_mean_below(final_losses)
-    printable_ttest_results = r"{" + "\n    " + ",\n    ".join([f'"{k}": {v}' for k, v in ttest_results.items()]) + "\n" + r"}"
-    print(f"```python\n{printable_ttest_results}\n```")
+    # print("\n#### T-test results\n")
+    # ttest_results = test_mean_below(final_losses)
+    # printable_ttest_results = r"{" + "\n    " + ",\n    ".join([f'"{k}": {v}' for k, v in ttest_results.items()]) + "\n" + r"}"
+    # print(f"```python\n{printable_ttest_results}\n```")
 
-    print("\n### Run times\n")
-    final_times = get_final_times("t-test-results.md", [f"25 {hnum}" for hnum in range(28)])
-    fts = [f"{t:.3f}" for t in final_times]
-    print(f"\n#### Run times\n\n```python\n{fts}\n```")
-    final_times = np.array(final_times)
-    print("\n#### Simple statistics\n")
-    print(f"\nMean:     {np.mean(final_times):.3f} ± {np.std(final_times):.3f}")
-    print(f"Median:   {np.median(final_times):.3f}")
-    print(f"Min:      {np.min(final_times):.3f}")
-    print(f"Max:      {np.max(final_times):.3f}")
+    # print("\n### Run times\n")
+    # final_times = get_final_times("t-test-results.md", [f"25 {hnum}" for hnum in range(28)])
+    # fts = [f"{t:.3f}" for t in final_times]
+    # print(f"\n#### Run times\n\n```python\n{fts}\n```")
+    # final_times = np.array(final_times)
+    # print("\n#### Simple statistics\n")
+    # print(f"\nMean:     {np.mean(final_times):.3f} ± {np.std(final_times):.3f}")
+    # print(f"Median:   {np.median(final_times):.3f}")
+    # print(f"Min:      {np.min(final_times):.3f}")
+    # print(f"Max:      {np.max(final_times):.3f}")
 
-    print("\n## Two new value embeddings")
-    print("\n### Final val_losses")
-    final_losses=get_final_val_losses("t-test-results.md", [f"26 {hnum}" for hnum in range(37)])
-    print(f"\n#### Final val_losses\n\n```python\n{final_losses}\n```")
-    final_losses = np.array(final_losses)
+    # print("\n## Two new value embeddings")
+    # print("\n### Final val_losses")
+    # final_losses=get_final_val_losses("t-test-results.md", [f"26 {hnum}" for hnum in range(37)])
+    # print(f"\n#### Final val_losses\n\n```python\n{final_losses}\n```")
+    # final_losses = np.array(final_losses)
 
-    print("\n#### Simple statistics\n")
-    print(f"- Mean:     {np.mean(final_losses):.3f} ± {np.std(final_losses):.3f}")
-    print(f"- Median:   {np.median(final_losses):.3f}")
-    print(f"- Min:      {np.min(final_losses):.3f}")
-    print(f"- Max:      {np.max(final_losses):.3f}")
-    print(f"- # < 2.92: {np.sum(final_losses < 2.92).item():.0f}")
+    # print("\n#### Simple statistics\n")
+    # print(f"- Mean:     {np.mean(final_losses):.3f} ± {np.std(final_losses):.3f}")
+    # print(f"- Median:   {np.median(final_losses):.3f}")
+    # print(f"- Min:      {np.min(final_losses):.3f}")
+    # print(f"- Max:      {np.max(final_losses):.3f}")
+    # print(f"- # < 2.92: {np.sum(final_losses < 2.92).item():.0f}")
 
-    print("\n#### T-test results\n")
-    ttest_results = test_mean_below(final_losses)
-    printable_ttest_results = r"{" + "\n    " + ",\n    ".join([f'"{k}": {v}' for k, v in ttest_results.items()]) + "\n" + r"}"
-    print(f"```python\n{printable_ttest_results}\n```")
+    # print("\n#### T-test results\n")
+    # ttest_results = test_mean_below(final_losses)
+    # printable_ttest_results = r"{" + "\n    " + ",\n    ".join([f'"{k}": {v}' for k, v in ttest_results.items()]) + "\n" + r"}"
+    # print(f"```python\n{printable_ttest_results}\n```")
 
-    print("\n### Run times\n")
-    final_times = get_final_times("t-test-results.md", [f"26 {hnum}" for hnum in range(37)])
-    fts = [f"{t:.3f}" for t in final_times]
-    print(f"\n#### Run times\n\n```python\n{fts}\n```")
-    final_times = np.array(final_times)
-    print("\n#### Simple statistics\n")
-    print(f"\nMean:     {np.mean(final_times):.3f} ± {np.std(final_times):.3f}")
-    print(f"Median:   {np.median(final_times):.3f}")
-    print(f"Min:      {np.min(final_times):.3f}")
-    print(f"Max:      {np.max(final_times):.3f}")
+    # print("\n### Run times\n")
+    # final_times = get_final_times("t-test-results.md", [f"26 {hnum}" for hnum in range(37)])
+    # fts = [f"{t:.3f}" for t in final_times]
+    # print(f"\n#### Run times\n\n```python\n{fts}\n```")
+    # final_times = np.array(final_times)
+    # print("\n#### Simple statistics\n")
+    # print(f"\nMean:     {np.mean(final_times):.3f} ± {np.std(final_times):.3f}")
+    # print(f"Median:   {np.median(final_times):.3f}")
+    # print(f"Min:      {np.min(final_times):.3f}")
+    # print(f"Max:      {np.max(final_times):.3f}")
+
+    plot_val_loss(
+        header_numbers=[f"26 {i}" for i in range(37)] + [f"5 {i}" for i in range(5)],
+        average_over={
+            "2 new valembs": [f"26 {i}" for i in range(28)],
+            "5 x01": [f"5 {i}" for i in range(5)],
+        },
+        filename="t-test-results.md",
+        x_axis="time",
+    )
+    # plot_val_loss(
+    #     header_numbers=[f"25 {i}" for i in range(28)]+[f"26 {i}" for i in range(37)],
+    #     average_over={
+    #         "baseline": [f"25 {i}" for i in range(28)],
+    #         "2 new valembs": [f"26 {i}" for i in range(28)],
+    #     },
+    #     filename="t-test-results.md",
+    #     x_axis="time",
+    # )
