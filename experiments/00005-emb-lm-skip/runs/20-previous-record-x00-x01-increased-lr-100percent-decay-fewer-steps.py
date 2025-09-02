@@ -373,7 +373,7 @@ class Hyperparameters:
     val_seq_len = 4*64*1024 # FlexAttention sequence length for validation
     # optimization
     num_iterations = 5800 # number of iterations to run
-    cooldown_frac = 0.7 # fraction of training spent cooling down the learning rate
+    cooldown_frac = 1.0 # fraction of training spent cooling down the learning rate
     # architecture
     vocab_size = 50257
     # evaluation and logging
@@ -396,8 +396,8 @@ master_process = (rank == 0) # this process will do logging, checkpointing etc.
 # begin logging
 if master_process:
     run_id_full = f"{run_id:03d}_{uuid.uuid4()}"
-    os.makedirs("../logs/18-previous-record-x00-x01-increased-lr", exist_ok=True)
-    logfile = f"../logs/18-previous-record-x00-x01-increased-lr/{run_id_full}.txt"
+    os.makedirs("../logs/20-previous-record-x00-x01-increased-lr-100percent-decay-fewer-steps", exist_ok=True)
+    logfile = f"../logs/20-previous-record-x00-x01-increased-lr-100percent-decay-fewer-steps/{run_id_full}.txt"
     print(logfile)
 def print0(s, console=False):
     if master_process:
