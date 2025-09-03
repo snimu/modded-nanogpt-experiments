@@ -2012,7 +2012,6 @@ step:5800/5800 val_loss:2.920262 train_time:1444762ms step_avg:249.10ms
 
 ## 18 2
 
-        print0(f"step:{step}/{train_steps} val_loss:{val_loss:.6f} train_time:{training_time_ms:.0f}ms step_avg:{training_time_ms/max(step, 1):.2f}ms", console=True)
 step:0/5800 val_loss:10.825840 train_time:0ms step_avg:0.23ms
 step:125/5800 val_loss:4.306649 train_time:28629ms step_avg:229.03ms
 step:250/5800 val_loss:3.874810 train_time:57468ms step_avg:229.87ms
