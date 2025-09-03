@@ -196,8 +196,17 @@ class Block(nn.Module):
         self.attn = CausalSelfAttention(dim, num_heads, max_seq_len) if layer_idx != 7 else None
         self.mlp = MLP(dim)
 
-    def forward(self, x: Tensor, ve: Tensor | None, x0: Tensor, block_mask: BlockMask, lambdas: Tensor, sa_lambdas: Tensor):
-        x = lambdas[0] * x + lambdas[1] * x0
+    def forward(
+            self,
+            x: Tensor,
+            ve: Tensor | None,
+            x00: Tensor,
+            x01: Tensor,
+            block_mask: BlockMask,
+            lambdas: Tensor,
+            sa_lambdas: Tensor,
+    ):
+        x = lambdas[0] * x + lambdas[1] * x00 + lambdas[2] * x01
         if self.attn is not None:
             x = x + self.attn(x, ve, block_mask, sa_lambdas)
         x = x + self.mlp(norm(x))
@@ -212,7 +221,8 @@ def next_multiple_of_n(v: float | int, *, n: int):
 class GPT(nn.Module):
     def __init__(self, vocab_size: int, num_layers: int, num_heads: int, model_dim: int, max_seq_len: int):
         super().__init__()
-        self.embed = nn.Embedding(vocab_size, model_dim)
+        self.embed1 = nn.Embedding(vocab_size, model_dim)
+        self.embed2 = nn.Embedding(vocab_size, model_dim)
         # token value embeddings by @KoszarskyB - inspired by @Grad62304977's value residual implementation following https://arxiv.org/abs/2410.17897
         # value embedding code simplification inspired by @ragulpr https://github.com/KellerJordan/modded-nanogpt/pull/78
         self.value_embeds = nn.ModuleList([nn.Embedding(vocab_size, model_dim) for _ in range(5)])
@@ -224,7 +234,7 @@ class GPT(nn.Module):
         assert num_layers % 2 == 0
         self.scalars = nn.Parameter(torch.cat([
             torch.ones(num_layers), # skip_weights
-            *[torch.tensor([1.0, 0.0]) for _ in range(num_layers)], # block lambdas
+            *[torch.tensor([1.0, 0.0, 0.0]) for _ in range(num_layers)], # block lambdas
             *[torch.tensor([0.5, 0.5]) for _ in range(num_layers)], # SA lambdas
         ]))
 
@@ -273,14 +283,15 @@ class GPT(nn.Module):
 
         ve = [value_embed(input_seq) for value_embed in self.value_embeds]
         # 012 ... 012 structure on token value embeddings by @YouJiacheng, improved on @leloykun's U-net structure
-        ve = [ve[0], ve[1], ve[2], ve[3], ve[4]] + [None] * (len(self.blocks) - 10) + [ve[0], ve[1], ve[2], ve[3], ve[4]]
+        ve = [ve[0], ve[1], ve[2], ve[3], ve[4]] + [None] * (len(self.blocks) - 8) + [ve[0], ve[1], ve[2], ve[3], ve[4]]
         assert len(ve) == len(self.blocks)
 
         long_bm, short_bm = self.create_blockmasks(input_seq, sliding_window_num_blocks)
         block_masks = [long_bm, short_bm, short_bm, short_bm, long_bm, short_bm, short_bm, short_bm, short_bm, short_bm, short_bm, long_bm, short_bm, short_bm, short_bm, long_bm]
         assert len(block_masks) == len(self.blocks)
 
-        x = x0 = norm(self.embed(input_seq)[None]) # use of norm here by @Grad62304977
+        x = x00 = norm(self.embed1(input_seq)[None]) # use of norm here by @Grad62304977
+        x01 = norm(self.embed2(input_seq)[None])
 
         skip_connections = []
         skip_map = {
@@ -289,12 +300,12 @@ class GPT(nn.Module):
             11: 2,
         }
         skip_weights = self.scalars[:len(self.blocks)]
-        lambdas = self.scalars[1 * len(self.blocks): 3 * len(self.blocks)].view(-1, 2)
-        sa_lambdas = self.scalars[3 * len(self.blocks): 5 * len(self.blocks)].view(-1, 2)
+        lambdas = self.scalars[1 * len(self.blocks): 4 * len(self.blocks)].view(-1, 3)
+        sa_lambdas = self.scalars[4 * len(self.blocks): 6 * len(self.blocks)].view(-1, 2)
         for i in range(len(self.blocks)):
             if i in skip_map:
                 x = x + skip_weights[skip_map[i]] * skip_connections[skip_map[i]]
-            x = self.blocks[i](x, ve[i], x0, block_masks[i], lambdas[i], sa_lambdas[i])
+            x = self.blocks[i](x, ve[i], x00, x01, block_masks[i], lambdas[i], sa_lambdas[i])
             skip_connections.append(x)
 
         x = norm(x)
@@ -375,8 +386,8 @@ master_process = (rank == 0) # this process will do logging, checkpointing etc.
 # begin logging
 if master_process:
     run_id_full = f"{run_id:03d}_{uuid.uuid4()}"
-    os.makedirs("../logs/60-2025-09-03-baseline-5-valembs", exist_ok=True)
-    logfile = f"../logs/60-2025-09-03-baseline-5-valembs/{run_id_full}.txt"
+    os.makedirs("../logs/62-2025-09-03-record-5-valembs-x01", exist_ok=True)
+    logfile = f"../logs/62-2025-09-03-record-5-valembs-x01/{run_id_full}.txt"
     print(logfile)
 def print0(s, console=False):
     if master_process:
@@ -411,7 +422,11 @@ for param in model.parameters():
 
 # collect the parameters to optimize
 hidden_matrix_params = sorted((p for p in model.blocks.parameters() if p.ndim >= 2), key=lambda x: x.size(), reverse=True)
-embed_params = [*model.embed.parameters(), *model.value_embeds.parameters()]
+embed_params = [
+    *model.embed1.parameters(),
+    *model.embed2.parameters(),
+    *model.value_embeds.parameters()
+]
 scalar_params = [model.scalars]
 head_params: list[nn.Parameter] = [model.lm_head_w]
 # sanity check
