@@ -210,13 +210,12 @@ class Block(nn.Module):
             self,
             x: Tensor,
             ve: Tensor | None,
-            x00: Tensor,
-            x01: Tensor,
+            x0: Tensor,
             block_mask: BlockMask,
             lambdas: Tensor,
             sa_lambdas: Tensor,
     ):
-        x = lambdas[0] * x + lambdas[1] * x00 + lambdas[2] * x01
+        x = lambdas[0] * x + lambdas[1] * x0
         if self.attn is not None:
             x = x + self.attn(x, ve, block_mask, sa_lambdas)
         x = x + self.mlp(norm(x))
@@ -299,7 +298,7 @@ class GPT(nn.Module):
         block_masks = [long_bm, short_bm, short_bm, short_bm, long_bm, short_bm, short_bm, short_bm, short_bm, short_bm, short_bm, long_bm, short_bm, short_bm, short_bm, long_bm]
         assert len(block_masks) == len(self.blocks)
 
-        x = x00 = norm(self.embed(input_seq)[None]) # use of norm here by @Grad62304977
+        x = x0 = norm(self.embed(input_seq)[None]) # use of norm here by @Grad62304977
 
         skip_connections = []
         skip_map = {
@@ -313,7 +312,7 @@ class GPT(nn.Module):
         for i in range(len(self.blocks)):
             if i in skip_map:
                 x = x + skip_weights[skip_map[i]] * skip_connections[skip_map[i]]
-            x = self.blocks[i](x, ve[i], x00, block_masks[i], lambdas[i], sa_lambdas[i])
+            x = self.blocks[i](x, ve[i], x0, block_masks[i], lambdas[i], sa_lambdas[i])
             skip_connections.append(x)
 
         x = norm(x)
