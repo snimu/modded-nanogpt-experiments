@@ -386,8 +386,8 @@ master_process = (rank == 0) # this process will do logging, checkpointing etc.
 # begin logging
 if master_process:
     run_id_full = f"{run_id:03d}_{uuid.uuid4()}"
-    os.makedirs("../logs/63-2025-09-03-record-5-valembs-x01-5690steps-higher-emb-lr", exist_ok=True)
-    logfile = f"../logs/63-2025-09-03-record-5-valembs-x01-5690steps-higher-emb-lr/{run_id_full}.txt"
+    os.makedirs("../logs/62-2025-09-03-record-5-valembs-x01", exist_ok=True)
+    logfile = f"../logs/62-2025-09-03-record-5-valembs-x01/{run_id_full}.txt"
     print(logfile)
 def print0(s, console=False):
     if master_process:
@@ -436,7 +436,7 @@ assert optimized_parameters_set == {*model.parameters()}
 assert len(optimized_parameters_set) == sum(len(lst) for lst in params_collections)
 
 # init the optimizer(s)
-adam_param_groups = [dict(params=head_params, lr=1/320), dict(params=embed_params, lr=0.4), dict(params=scalar_params, lr=0.015)]
+adam_param_groups = [dict(params=head_params, lr=1/320), dict(params=embed_params, lr=0.3), dict(params=scalar_params, lr=0.015)]
 # small adam epsilon by @YouJiacheng. this is an alternate method of fixing the world_size dependence
 # discovered by @fernbear.bsky.social https://x.com/hi_tysam/status/1879692937589875094
 optimizer1 = torch.optim.AdamW(adam_param_groups, betas=(0.8, 0.95), eps=1e-10, weight_decay=0.0, fused=True)
