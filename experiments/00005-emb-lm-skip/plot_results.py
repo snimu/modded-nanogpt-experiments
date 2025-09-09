@@ -59,12 +59,29 @@ def plot_val_loss(
 
 
 if __name__ == "__main__":
+    # plot_val_loss(
+    #     filename="results.md",
+    #     header_numbers=[f"3 {i}" for i in range(5)] + [f"0 {i}" for i in range(5)],
+    #     average_over={
+    #         "emb-to-lmhead-skip": [f"3 {i}" for i in range(5)],
+    #         "baseline": [f"0 {i}" for i in range(5)],
+    #     },
+    #     x_axis="time",
+    # )
+    # plot_val_loss(
+    #     filename="results.md",
+    #     header_numbers=[f"{i} {j}" for i in [16, 18] for j in range(4)],
+    #     average_over={
+    #         "16": ["16 0", "16 1", "16 2", "16 3"],
+    #         "18": ["18 0", "18 1", "18 2", "18 3"],
+    #     },
+    #     x_axis="step",
+    # )
     plot_val_loss(
         filename="results.md",
-        header_numbers=[f"3 {i}" for i in range(5)] + [f"0 {i}" for i in range(5)],
+        header_numbers=["16 0 (long)", "17 0 (long)", "16 1 (long)", "17 1 (long)"],
         average_over={
-            "emb-to-lmhead-skip": [f"3 {i}" for i in range(5)],
-            "baseline": [f"0 {i}" for i in range(5)],
-        },
-        x_axis="time",
+            16: ["16 0 (long)", "16 1 (long)"],
+            17: ["17 0 (long)", "17 1 (long)"],
+        }
     )

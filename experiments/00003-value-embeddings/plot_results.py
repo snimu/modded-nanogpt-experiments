@@ -224,15 +224,15 @@ if __name__ == "__main__":
     # print(f"Min:      {np.min(final_times):.3f}")
     # print(f"Max:      {np.max(final_times):.3f}")
 
-    plot_val_loss(
-        header_numbers=[f"26 {i}" for i in range(37)] + [f"5 {i}" for i in range(5)],
-        average_over={
-            "2 new valembs": [f"26 {i}" for i in range(28)],
-            "5 x01": [f"5 {i}" for i in range(5)],
-        },
-        filename="t-test-results.md",
-        x_axis="time",
-    )
+    # plot_val_loss(
+    #     header_numbers=[f"26 {i}" for i in range(37)] + [f"5 {i}" for i in range(5)],
+    #     average_over={
+    #         "2 new valembs": [f"26 {i}" for i in range(28)],
+    #         "5 x01": [f"5 {i}" for i in range(5)],
+    #     },
+    #     filename="t-test-results.md",
+    #     x_axis="time",
+    # )
     # plot_val_loss(
     #     header_numbers=[f"25 {i}" for i in range(28)]+[f"26 {i}" for i in range(37)],
     #     average_over={
@@ -242,3 +242,13 @@ if __name__ == "__main__":
     #     filename="t-test-results.md",
     #     x_axis="time",
     # )
+
+    plot_val_loss(
+        filename="results.md",
+        header_numbers={
+            "22-0": "baseline 0&13, 1&14, 2&15",
+            "27 1": "shared 0&15, 1&14, 2&13",
+            "24-0": "baseline 0&11, 1&12, 2&13, 3&14, 4&15",
+            "28 1": "shared 0&15, 1&14, 2&13, 3&12, 4&11",
+        }
+    )
