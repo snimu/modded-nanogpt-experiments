@@ -1,12 +1,3 @@
-"""
-Modified from:
-
-https://github.com/KellerJordan/modded-nanogpt/blob/master/records/042225_GPT2Medium_Record8/075_640429f2-e726-4e83-aa27-684626239ffc.txt
-
-- Removed the _patched_trace_structured function
-- Removed `torch._dynamo.config.compiled_autograd = True`
-- Adapted paths to the new directory structure
-"""
 
 import os
 import sys
@@ -318,7 +309,7 @@ class GPT(nn.Module):
             x = self.blocks[i](x, ve[i], x00, x01, block_masks[i], lambdas[i], sa_lambdas[i])
             skip_connections.append(x)
 
-        x = torch.cat([norm(x), x00], dim=-1)
+        x = torch.cat([norm(x), norm(skip_connections[1])], dim=-1)
         if self.training:
             logits: Tensor = F.linear(x.flatten(end_dim=1), self.lm_head_w.bfloat16()).float()
             loss = F.cross_entropy(15 * logits * torch.rsqrt(logits.square() + 225), target_seq)
@@ -396,8 +387,8 @@ master_process = (rank == 0) # this process will do logging, checkpointing etc.
 # begin logging
 if master_process:
     run_id_full = f"{run_id:03d}_{uuid.uuid4()}"
-    os.makedirs("../logs/21-concat-x00-from-previous-record", exist_ok=True)
-    logfile = f"../logs/21-concat-x00-from-previous-record/{run_id_full}.txt"
+    os.makedirs("../logs/2301-concat-skip1-from-previous-record", exist_ok=True)
+    logfile = f"../logs/2301-concat-skip1-from-previous-record/{run_id_full}.txt"
     print(logfile)
 def print0(s, console=False):
     if master_process:
