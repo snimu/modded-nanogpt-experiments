@@ -409,17 +409,38 @@ if __name__ == "__main__":
     #     x_axis="step",
     # )
 
+    def make_title(title: str):
+        barrier = "\n" + "-" * (len(title) + 2) + "\n"
+        return barrier + f" {title} " + barrier
+
     losses = get_final_val_losses(
         filename="t-test-results.md",
-        header_numbers=[f"68 {i}" for i in range(49)],
+        header_numbers=[f"692 {i}" for i in range(18)],
     )
     times = get_final_times(
         filename="t-test-results.md",
-        header_numbers=[f"68 {i}" for i in range(49)],
+        header_numbers=[f"692 {i}" for i in range(18)],
     )
     from rich import print
+    print(make_title("692: Record attempt (5690 steps)"))
     print(test_mean_below(losses=losses))
-    print("\nLoss stats:\n")
+    print("\nLoss stats 692:\n")
     print(get_stats(losses))
-    print("\nTime stats:\n")
+    print("\nTime stats 692:\n")
+    print(get_stats(times))
+    
+    
+    losses = get_final_val_losses(
+        filename="t-test-results.md",
+        header_numbers=[f"693 {i}" for i in range(17)],
+    )
+    times = get_final_times(
+        filename="t-test-results.md",
+        header_numbers=[f"693 {i}" for i in range(17)],
+    )
+    print(make_title("693: Inverse ve sharing"))
+    print(test_mean_below(losses=losses))
+    print("\nLoss stats 693:\n")
+    print(get_stats(losses))
+    print("\nTime stats 693:\n")
     print(get_stats(times))
