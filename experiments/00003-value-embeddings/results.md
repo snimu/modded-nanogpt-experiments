@@ -2859,7 +2859,7 @@ step:5625/5820 val_loss:2.924740 train_time:1394306ms step_avg:247.88ms
 step:5750/5820 val_loss:2.920705 train_time:1427174ms step_avg:248.20ms
 step:5820/5820 val_loss:2.919722 train_time:1445582ms step_avg:248.38ms
 
-## 27
+## 27 1
 
 step:0/5820 val_loss:10.825840 train_time:0ms step_avg:0.22ms
 step:125/5820 val_loss:4.326815 train_time:27887ms step_avg:223.09ms
@@ -2910,7 +2910,7 @@ step:5625/5820 val_loss:2.929343 train_time:1367850ms step_avg:243.17ms
 step:5750/5820 val_loss:2.925174 train_time:1400142ms step_avg:243.50ms
 step:5820/5820 val_loss:2.924185 train_time:1418195ms step_avg:243.68ms
 
-## 28
+## 28 1
 
 step:0/5820 val_loss:10.825840 train_time:0ms step_avg:0.11ms
 step:125/5820 val_loss:4.305565 train_time:28157ms step_avg:225.25ms

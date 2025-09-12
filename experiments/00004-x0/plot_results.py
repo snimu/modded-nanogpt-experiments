@@ -415,19 +415,21 @@ if __name__ == "__main__":
 
     losses = get_final_val_losses(
         filename="t-test-results.md",
-        header_numbers=[f"692 {i}" for i in range(18)],
+        header_numbers=[f"692 {i}" for i in range(19)],
     )
     times = get_final_times(
         filename="t-test-results.md",
-        header_numbers=[f"692 {i}" for i in range(18)],
+        header_numbers=[f"692 {i}" for i in range(19)],
     )
     from rich import print
     print(make_title("692: Record attempt (5690 steps)"))
     print(test_mean_below(losses=losses))
     print("\nLoss stats 692:\n")
     print(get_stats(losses))
+    print(losses)
     print("\nTime stats 692:\n")
     print(get_stats(times))
+    print(times)
     
     
     losses = get_final_val_losses(

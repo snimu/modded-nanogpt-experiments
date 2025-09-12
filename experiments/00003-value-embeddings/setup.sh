@@ -47,3 +47,21 @@ torchrun --standalone --nproc_per_node=8 24-new-valemb-3-14-4-15-record.py
 
 torchrun --standalone --nproc-per-node=8 27-2025-09-02-shared-valemb-015-114-213.py
 torchrun --standalone --nproc-per-node=8 28-2025-09-02-shared-valemb-015-114-213-312-411.py
+
+
+
+cd ../../00003-value-embeddings
+git pull
+pip install uv
+uv venv
+source .venv/bin/activate
+uv pip install numpy tqdm torch huggingface-hub matplotlib rich
+uv pip install --pre torch --index-url https://download.pytorch.org/whl/nightly/cu126 --upgrade
+uv run data/cached_fineweb10B.py
+
+cd runs
+
+torchrun --standalone --nproc_per_node=8 22-baseline-record.py
+torchrun --standalone --nproc_per_node=8 24-new-valemb-3-14-4-15-record.py
+torchrun --standalone --nproc-per-node=8 27-2025-09-02-shared-valemb-015-114-213.py
+torchrun --standalone --nproc-per-node=8 28-2025-09-02-shared-valemb-015-114-213-312-411.py
