@@ -1,4 +1,9 @@
 
+import sys
+import argparse
+import os
+from typing import Literal
+
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy import stats
@@ -112,3 +117,64 @@ def test_mean_below(losses, threshold=2.92, alpha=0.05):
         "upper_conf_bound_mean": upper_bound,  # (1-alpha) one-sided upper bound
         "threshold": threshold
     }
+
+
+def extract_vallosses(path: str, name: str, offset: int = 0):
+    files = sorted(os.listdir(path))
+    results = ""
+    for i, file in enumerate(files):
+        title = f"## {name} {i + offset}"
+        with open(os.path.join(path, file), "r") as f:
+            lines = f.readlines()
+        lines = [line.strip() for line in lines if "val_loss" in line and line.startswith("step:") and line.strip()]
+        trace = '\n'.join(lines)
+        results += f"{title}\n\n{trace}\n\n"
+
+    return results
+
+
+def get_all_final_losses_and_times(path_to_results: str) -> dict[str, dict[Literal['loss', 'time'], float]]:
+    subdirs = [d for d in os.listdir(path_to_results) if os.path.isdir(d)]
+
+    # Collect all the results into one file
+    fulltext = ""
+    for subdir in subdirs:
+        fulltext += extract_vallosses(
+            path=os.path.join(path_to_results, subdir),
+            name=subdir
+        ) + "\n\n"
+    results_file = os.path.join(path_to_results, "extracted_vallosses")
+    with open(results_file, "w") as f:
+        f.write(fulltext)
+
+    # Extract val_losses and times
+    results = dict()
+    for subdir in subdirs:
+        loss = np.mean(get_final_val_losses(filename=results_file, header_numbers=[subdir]))
+        time = np.mean(get_final_times(filename=results_file, header_numbers=[subdir]))
+        results[subdir] = {"loss": float(loss), "time": float(time)}
+    return results
+
+
+def get_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--extract-losses", action="store_true")
+    parser.add_argument("--print-final-stats", action="store_true")
+    parser.add_argument("--path", type=str, default="", help="The subdir of logs if --extract-losses, logs if --print-final-stats")
+    parser.add_argument("--name", type=str, default="", help="The name if --extract-losses")
+    parser.add_argument("--offset", type=int, default=0, help="The offset if --extract-losses")
+
+
+if __name__ == "__main__":
+    args = get_args()
+    if args.extract_losses:
+        vallosses = extract_vallosses(path=args.path, name=args.name, offset=args.offset)
+        with open(os.path.join("logs", args.path, "vallosses.md"), "w") as f:
+            f.write(vallosses)
+    if args.print_final_state:
+        import rich
+        print()
+        rich.print(get_all_final_losses_and_times(args.path))
+        print()
+    if args.extract_losses or args.print_final_state:
+        sys.exit(0)  # only perform the randomly typed shit below if nothing else is done
