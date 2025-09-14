@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 
-os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+os.environ["PYTORCH_ALLOC_CONF"] = "expandable_segments:True"
 import torch
 torch.empty(1, device="cuda", requires_grad=True).backward() # prevents a bug on some systems
 from torch import Tensor, nn
@@ -175,9 +175,9 @@ class CausalSelfAttention(nn.Module):
         return y
 
 class MLP(nn.Module):
-    def __init__(self, dim: int, expansion_factor: int = 4):
+    def __init__(self, dim: int):
         super().__init__()
-        hdim = expansion_factor * dim
+        hdim = 4 * dim
         self.fc_w = nn.Parameter(init_linear(torch.empty(hdim, dim)).bfloat16())
         self.proj_w = nn.Parameter(torch.zeros(dim, hdim).bfloat16())
         self.fc_w.wd_mul = 2.0
@@ -201,13 +201,14 @@ class Block(nn.Module):
             self,
             x: Tensor,
             ve: Tensor | None,
-            x0: Tensor,
+            x00: Tensor,
+            x01: Tensor,
             block_mask: BlockMask,
             lambdas: Tensor,
             sa_lambdas: Tensor,
             x_concat: Tensor | None,
     ):
-        x = lambdas[0] * x + lambdas[1] * x0
+        x = lambdas[0] * x + lambdas[1] * x00 + lambdas[2] * x01
         if self.attn is not None:
             x = x + self.attn(x, ve, block_mask, sa_lambdas)
         if x_concat is not None:
@@ -224,7 +225,8 @@ def next_multiple_of_n(v: float | int, *, n: int):
 class GPT(nn.Module):
     def __init__(self, vocab_size: int, num_layers: int, num_heads: int, model_dim: int, max_seq_len: int):
         super().__init__()
-        self.embed = nn.Embedding(vocab_size, model_dim)
+        self.embed1 = nn.Embedding(vocab_size, model_dim)
+        self.embed2 = nn.Embedding(vocab_size, model_dim)
         # token value embeddings by @KoszarskyB - inspired by @Grad62304977's value residual implementation following https://arxiv.org/abs/2410.17897
         # value embedding code simplification inspired by @ragulpr https://github.com/KellerJordan/modded-nanogpt/pull/78
         self.value_embeds = nn.ModuleList([nn.Embedding(vocab_size, model_dim) for _ in range(5)])
@@ -236,7 +238,7 @@ class GPT(nn.Module):
         assert num_layers % 2 == 0
         self.scalars = nn.Parameter(torch.cat([
             torch.ones(num_layers), # skip_weights
-            *[torch.tensor([1.0, 0.0]) for _ in range(num_layers)], # block lambdas
+            *[torch.tensor([1.0, 0.0, 0.0]) for _ in range(num_layers)], # block lambdas
             *[torch.tensor([0.5, 0.5]) for _ in range(num_layers)], # SA lambdas
         ]))
 
@@ -292,7 +294,8 @@ class GPT(nn.Module):
         block_masks = [long_bm, short_bm, short_bm, short_bm, long_bm, short_bm, short_bm, short_bm, short_bm, short_bm, short_bm, long_bm, short_bm, short_bm, short_bm, long_bm]
         assert len(block_masks) == len(self.blocks)
 
-        x = x0 = norm(self.embed(input_seq)[None]) # use of norm here by @Grad62304977
+        x = x00 = norm(self.embed1(input_seq)[None]) # use of norm here by @Grad62304977
+        x01 = norm(self.embed2(input_seq)[None])
 
         skip_connections = []
         skip_map = {
@@ -308,8 +311,8 @@ class GPT(nn.Module):
             if i in skip_map:
                 x = x + skip_weights[skip_map[i]] * skip_connections[skip_map[i]]
             if i == len(self.blocks) - 1:
-                x_concat = x0
-            x = self.blocks[i](x, ve[i], x0, block_masks[i], lambdas[i], sa_lambdas[i], x_concat)
+                x_concat = x00
+            x = self.blocks[i](x, ve[i], x00, x01, block_masks[i], lambdas[i], sa_lambdas[i], x_concat)
             skip_connections.append(x)
 
         x = norm(x)
@@ -366,7 +369,7 @@ class Hyperparameters:
     train_seq_len = 64*1024 # FlexAttention sequence length
     val_seq_len = 4*64*1024 # FlexAttention sequence length for validation
     # optimization
-    num_iterations = 5820 # number of iterations to run
+    num_iterations = 5690 # number of iterations to run
     cooldown_frac = 0.7 # fraction of training spent cooling down the learning rate
     # architecture
     vocab_size = 50257
@@ -426,7 +429,11 @@ for param in model.parameters():
 
 # collect the parameters to optimize
 hidden_matrix_params = sorted((p for p in model.blocks.parameters() if p.ndim >= 2), key=lambda x: x.size(), reverse=True)
-embed_params = [*model.embed.parameters(), *model.value_embeds.parameters()]
+embed_params = [
+    *model.embed1.parameters(),
+    *model.embed2.parameters(),
+    *model.value_embeds.parameters()
+]
 scalar_params = [model.scalars]
 head_params: list[nn.Parameter] = [model.lm_head_w]
 # sanity check
