@@ -1,20 +1,9 @@
-"""
-Modified from:
-
-https://github.com/KellerJordan/modded-nanogpt/blob/master/records/042225_GPT2Medium_Record8/075_640429f2-e726-4e83-aa27-684626239ffc.txt
-
-- Removed the _patched_trace_structured function
-- Removed `torch._dynamo.config.compiled_autograd = True`
-- Adapted paths to the new directory structure
-"""
-
 import os
 import sys
 with open(sys.argv[0]) as f:
     code = f.read() # read the code of this file ASAP, for logging
 import uuid
 import time
-from time import perf_counter
 import copy
 from dataclasses import dataclass
 from functools import lru_cache
@@ -28,6 +17,7 @@ import torch.nn.functional as F
 import torch.distributed as dist
 # use of FlexAttention contributed by @KoszarskyB
 from torch.nn.attention.flex_attention import BlockMask, flex_attention
+torch._inductor.config.coordinate_descent_tuning = True # we allow this flag for medium track
 
 # -----------------------------------------------------------------------------
 # Muon optimizer
@@ -419,9 +409,6 @@ def nvidia_smi():
 print0(nvidia_smi())
 print0("="*100)
 
-if master_process:
-    t0 = perf_counter()
-
 ########################################
 #    Construct model and optimizer     #
 ########################################
@@ -439,7 +426,6 @@ hidden_matrix_params = sorted((p for p in model.blocks.parameters() if p.ndim >=
 embed_params = [
     *model.embed1.parameters(),
     *model.embed2.parameters(),
-    *model.embed_head.parameters(),
     *model.value_embeds.parameters()
 ]
 scalar_params = [model.scalars]
@@ -482,7 +468,7 @@ def get_window_size_blocks(step: int):
     assert 0 <= x <= 1
     # Linearly increase the block-wise sliding window size over training 128 -> 1792
     # increase by @fernbear.bsky.social; block-wise by @YouJiacheng
-    factor = 4 * x ** 3 - 6 * x ** 2 + 3 * x
+    factor = 4 * x ** 3 - 6 * x ** 2 + 3 * x # cubic schedule by @jadenj3o
     window_size = next_multiple_of_n(3456 * factor, n=128)
     return get_window_size_blocks_helper(window_size)
 
@@ -495,7 +481,8 @@ model: nn.Module = torch.compile(model, dynamic=False)
 # Warmup the training kernels, then re-initialize the state so we aren't cheating
 warmup_steps = 10
 initial_state = copy.deepcopy(dict(model=model.state_dict(), optimizers=[opt.state_dict() for opt in optimizers]))
-for _ in range(warmup_steps):
+for warmup_step in range(warmup_steps):
+    print0(f"Warmup step {warmup_step+1}/{warmup_steps}")
     inputs = targets = torch.randint(0, args.vocab_size, size=(args.train_seq_len,), device="cuda")
     model(inputs.to(torch.int32), targets, get_window_size_blocks(0)).backward()
     for param in model.parameters():
@@ -507,9 +494,6 @@ model.load_state_dict(initial_state["model"])
 for opt, opt_state in zip(optimizers, initial_state["optimizers"]):
     opt.load_state_dict(opt_state)
 del initial_state
-
-if master_process:
-    print0(f"warmup_time:{perf_counter() - t0:.0f}")
 
 ########################################
 #        Training and validation       #
@@ -553,8 +537,8 @@ for step in range(train_steps + 1):
     if last_step:
         if master_process and args.save_checkpoint:
             log = dict(step=step, code=code, model=model.state_dict(), optimizers=[opt.state_dict() for opt in optimizers])
-            os.makedirs(f"../logs/{run_id_full}", exist_ok=True)
-            torch.save(log, f"../logs/{run_id_full}/state_step{step:06d}.pt")
+            os.makedirs(f"logs/{run_id_full}", exist_ok=True)
+            torch.save(log, f"logs/{run_id_full}/state_step{step:06d}.pt")
         # the last step only has the validation loop, so break to avoid training
         break
 
