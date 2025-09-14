@@ -175,9 +175,9 @@ class CausalSelfAttention(nn.Module):
         return y
 
 class MLP(nn.Module):
-    def __init__(self, dim: int):
+    def __init__(self, dim: int, expansion_factor: int):
         super().__init__()
-        hdim = 4 * dim
+        hdim = expansion_factor * dim
         self.fc_w = nn.Parameter(init_linear(torch.empty(hdim, dim)).bfloat16())
         self.proj_w = nn.Parameter(torch.zeros(dim, hdim).bfloat16())
         self.fc_w.wd_mul = 2.0
