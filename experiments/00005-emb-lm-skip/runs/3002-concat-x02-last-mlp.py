@@ -306,8 +306,8 @@ class GPT(nn.Module):
             11: 2,
         }
         skip_weights = self.scalars[:len(self.blocks)]
-        lambdas = self.scalars[1 * len(self.blocks): 3 * len(self.blocks)].view(-1, 2)
-        sa_lambdas = self.scalars[3 * len(self.blocks): 5 * len(self.blocks)].view(-1, 2)
+        lambdas = self.scalars[1 * len(self.blocks): 4 * len(self.blocks)].view(-1, 3)
+        sa_lambdas = self.scalars[4 * len(self.blocks): 6 * len(self.blocks)].view(-1, 2)
         x_concat = None
         for i in range(len(self.blocks)):
             if i in skip_map:
