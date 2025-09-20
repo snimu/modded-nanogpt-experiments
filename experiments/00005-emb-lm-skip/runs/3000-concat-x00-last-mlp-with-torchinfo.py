@@ -479,8 +479,6 @@ def get_window_size_blocks(step: int):
     window_size = next_multiple_of_n(3456 * factor, n=128)
     return get_window_size_blocks_helper(window_size)
 
-model: nn.Module = torch.compile(model, dynamic=False)
-
 model.eval()
 with torch.no_grad():
     if master_process:
@@ -499,6 +497,8 @@ with torch.no_grad():
     dist.barrier()
     dist.destroy_process_group()
     sys.exit(0)
+
+model: nn.Module = torch.compile(model, dynamic=False)
 
 ########################################
 #            Warmup kernels            #
