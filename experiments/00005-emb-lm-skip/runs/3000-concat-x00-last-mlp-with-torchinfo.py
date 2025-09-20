@@ -487,7 +487,11 @@ with torch.no_grad():
         print0(
             summary(
                 model,
-                input_data=torch.randint(0, args.vocab_size, size=(1,), device="cuda"),
+                input_data={
+                    "input_seq": torch.randint(0, args.vocab_size, size=(1,), device="cuda"),
+                    "target_seq": torch.randint(0, args.vocab_size, size=(1,), device="cuda"),
+                    "sliding_window_num_blocks": 1,
+                },
                 col_names=["input_size", "output_size", "num_params", "params_percent"],
             ),
             console=True,
