@@ -17,6 +17,7 @@ import torch.nn.functional as F
 import torch.distributed as dist
 # use of FlexAttention contributed by @KoszarskyB
 from torch.nn.attention.flex_attention import BlockMask, flex_attention
+from torch.utils.checkpoint import checkpoint
 torch._inductor.config.coordinate_descent_tuning = True # we allow this flag for medium track
 
 # -----------------------------------------------------------------------------
@@ -212,8 +213,14 @@ class Block(nn.Module):
         if self.attn is not None:
             x = x + self.attn(x, ve, block_mask, sa_lambdas)
         if x_concat is not None:
+            # Concat an earlier activation / extra embedding / ...
+            # And reuse it
             x = torch.cat([x, x_concat], dim=-1)
-        x = x + self.mlp(norm(x))
+            # save memory at the cost of re-computation
+            #   (required because of the increase dimension from the concatenation)
+            x = x + checkpoint(lambda z: self.mlp(norm(z)), x, use_reentrant=False)
+        else:
+            x = x + self.mlp(norm(x))
         return x
 
 # -----------------------------------------------------------------------------
