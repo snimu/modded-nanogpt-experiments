@@ -134,10 +134,9 @@ def extract_vallosses(path: str, name: str, offset: int = 0):
 
 
 def get_all_final_losses_and_times(path_to_results: str) -> dict[str, dict[Literal['loss', 'time'], float]]:
-    subdirs = [
-        d for d in os.listdir(path_to_results)
-        if os.path.isdir(os.path.join(path_to_results, d))
-    ]
+    # Find subdirectories under path_to_results (not under CWD)
+    with os.scandir(path_to_results) as it:
+        subdirs = sorted([e.name for e in it if e.is_dir()])
 
     # Collect all the results into one file
     fulltext = ""
@@ -146,16 +145,17 @@ def get_all_final_losses_and_times(path_to_results: str) -> dict[str, dict[Liter
             path=os.path.join(path_to_results, subdir),
             name=subdir
         ) + "\n\n"
+
     results_file = os.path.join(path_to_results, "extracted_vallosses")
     with open(results_file, "w") as f:
         f.write(fulltext)
 
     # Extract val_losses and times
-    results = dict()
+    results = {}
     for subdir in subdirs:
-        loss = np.mean(get_final_val_losses(filename=results_file, header_numbers=[subdir]))
-        time = np.mean(get_final_times(filename=results_file, header_numbers=[subdir]))
-        results[subdir] = {"loss": float(loss), "time": float(time)}
+        loss = float(np.mean(get_final_val_losses(filename=results_file, header_numbers=[subdir])))
+        time = float(np.mean(get_final_times(filename=results_file, header_numbers=[subdir])))
+        results[subdir] = {"loss": loss, "time": time}
     return results
 
 
