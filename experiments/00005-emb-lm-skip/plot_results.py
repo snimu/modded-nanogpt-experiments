@@ -134,7 +134,10 @@ def extract_vallosses(path: str, name: str, offset: int = 0):
 
 
 def get_all_final_losses_and_times(path_to_results: str) -> dict[str, dict[Literal['loss', 'time'], float]]:
-    subdirs = [d for d in os.listdir(path_to_results) if os.path.isdir(d)]
+    subdirs = [
+        d for d in os.listdir(path_to_results)
+        if os.path.isdir(os.path.join(path_to_results, d))
+    ]
 
     # Collect all the results into one file
     fulltext = ""
@@ -163,6 +166,7 @@ def get_args() -> argparse.Namespace:
     parser.add_argument("--path", type=str, default="", help="The subdir of logs if --extract-losses, logs if --print-final-stats")
     parser.add_argument("--name", type=str, default="", help="The name if --extract-losses")
     parser.add_argument("--offset", type=int, default=0, help="The offset if --extract-losses")
+    return parser.parse_args()
 
 
 if __name__ == "__main__":
@@ -171,12 +175,12 @@ if __name__ == "__main__":
         vallosses = extract_vallosses(path=args.path, name=args.name, offset=args.offset)
         with open(os.path.join("logs", args.path, "vallosses.md"), "w") as f:
             f.write(vallosses)
-    if args.print_final_state:
+    if args.print_final_stats:
         import rich
         print()
         rich.print(get_all_final_losses_and_times(args.path))
         print()
-    if args.extract_losses or args.print_final_state:
+    if args.extract_losses or args.print_final_stats:
         sys.exit(0)  # only perform the randomly typed shit below if nothing else is done
 
     # plot_val_loss(
