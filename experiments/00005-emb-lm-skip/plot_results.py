@@ -152,7 +152,7 @@ def get_all_final_losses_and_times(path_to_results: str) -> dict[str, dict[Liter
 
     # Extract val_losses and times
     results = {}
-    formatted_results = f"{'-'*20}"
+    formatted_results = f"\n\n{'-'*20}"
     for subdir in subdirs:
         subdir_path = os.path.join(path_to_results, subdir)
         try:
@@ -176,7 +176,7 @@ def get_all_final_losses_and_times(path_to_results: str) -> dict[str, dict[Liter
         loss = float(np.mean(final_losses))
         time = float(np.mean(final_times))
         results[subdir] = {"loss": round(loss, 4), "time": round(time, 2)}
-        formatted_results += f"{subdir} —— Loss: {results[subdir]['loss']}, Time: {results[subdir]['time']}"
+        formatted_results += f"\n{subdir} —— Loss: {results[subdir]['loss']}, Time: {results[subdir]['time']}"
 
     formatted_results += f"{'-'*20}\n\n"
     return results, formatted_results
