@@ -426,6 +426,7 @@ hidden_matrix_params = sorted((p for p in model.blocks.parameters() if p.ndim >=
 embed_params = [
     *model.embed1.parameters(),
     *model.embed2.parameters(),
+    *model.embed_head.parameters(),
     *model.value_embeds.parameters()
 ]
 scalar_params = [model.scalars]
