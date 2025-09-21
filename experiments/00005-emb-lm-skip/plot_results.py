@@ -183,6 +183,38 @@ def get_all_final_losses_and_times(path_to_results: str) -> dict[str, dict[Liter
     return results, formatted_results
 
 
+def plot_final_losses_over_names(
+        filename: str,
+        header_numbers: list[int | str],
+        names: list[str] | None = None,
+):
+    if names is not None:
+        assert isinstance(names, list), f"{type(names)=}"
+        assert len(names) == len(header_numbers), f"{len(names)=}, {len(header_numbers)=}"
+    else:
+        names = [str(hnum) for hnum in header_numbers]
+    
+    losses = get_final_val_losses(filename, header_numbers)
+
+    # Annotate each bar with its loss value (rounded to 4 decimals)
+    bars = plt.bar(names, losses)
+    plt.axhline(2.92, color='red', linewidth=1)
+    plt.ylim(2.9, 2.93)
+    ax = plt.gca()
+    ymin, ymax = ax.get_ylim()
+    y_offset = 0.02 * (ymax - ymin)
+    for rect, loss in zip(bars, losses):
+        ax.text(
+            rect.get_x() + rect.get_width() / 2.0,
+            rect.get_height() + y_offset,
+            f"{loss:.4f}",
+            ha="center",
+            va="bottom",
+            fontsize=9,
+        )
+    plt.show()
+
+
 def get_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--extract-losses", action="store_true")
@@ -206,7 +238,7 @@ if __name__ == "__main__":
         rich.print(formatted_results)
         print()
     if args.extract_losses or args.print_final_stats:
-        sys.exit(0)  # only perform the randomly typed shit below if nothing else is done
+        sys.exit(0)  # only perform the freeform code if nothing else is done
 
     # plot_val_loss(
     #     filename="results.md",
@@ -226,11 +258,20 @@ if __name__ == "__main__":
     #     },
     #     x_axis="step",
     # )
+    # plot_val_loss(
+    #     filename="results.md",
+    #     header_numbers=["16 0 (long)", "17 0 (long)", "16 1 (long)", "17 1 (long)"],
+    #     average_over={
+    #         "baseline": ["16 0 (long)", "16 1 (long)"],
+    #         "add x00 to output latent": ["17 0 (long)", "17 1 (long)"],
+    #     }
+    # )
+    # plot_final_losses_over_names(
+    #     filename="results.md",
+    #     header_numbers=[21, 22] + [f"23{i:02d}" for i in range(15)] + [24],
+    # )
     plot_val_loss(
         filename="results.md",
-        header_numbers=["16 0 (long)", "17 0 (long)", "16 1 (long)", "17 1 (long)"],
-        average_over={
-            "baseline": ["16 0 (long)", "16 1 (long)"],
-            "add x00 to output latent": ["17 0 (long)", "17 1 (long)"],
-        }
+        header_numbers=[2312, "0 0"],
+        x_axis="time",
     )

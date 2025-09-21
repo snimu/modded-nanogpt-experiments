@@ -123,7 +123,7 @@ def extract_vallosses(path: str, name: str, offset: int = 0):
     files = sorted(os.listdir(path))
     results = ""
     for i, file in enumerate(files):
-        title = f"## {name} {i + offset}"
+        title = f"## {name}-{i + offset}"
         with open(os.path.join(path, file), "r") as f:
             lines = f.readlines()
         lines = [line.strip() for line in lines if "val_loss" in line and line.startswith("step:") and line.strip()]
@@ -134,7 +134,9 @@ def extract_vallosses(path: str, name: str, offset: int = 0):
 
 
 def get_all_final_losses_and_times(path_to_results: str) -> dict[str, dict[Literal['loss', 'time'], float]]:
-    subdirs = [d for d in os.listdir(path_to_results) if os.path.isdir(d)]
+    # Find subdirectories under path_to_results (not under CWD)
+    with os.scandir(path_to_results) as it:
+        subdirs = sorted([e.name for e in it if e.is_dir()])
 
     # Collect all the results into one file
     fulltext = ""
@@ -143,17 +145,42 @@ def get_all_final_losses_and_times(path_to_results: str) -> dict[str, dict[Liter
             path=os.path.join(path_to_results, subdir),
             name=subdir
         ) + "\n\n"
+
     results_file = os.path.join(path_to_results, "extracted_vallosses")
     with open(results_file, "w") as f:
         f.write(fulltext)
 
     # Extract val_losses and times
-    results = dict()
+    results = {}
+    sep = f"{'-'*60}\n{'-'*60}"
+    formatted_results = f"\n\n{sep}"
     for subdir in subdirs:
-        loss = np.mean(get_final_val_losses(filename=results_file, header_numbers=[subdir]))
-        time = np.mean(get_final_times(filename=results_file, header_numbers=[subdir]))
-        results[subdir] = {"loss": float(loss), "time": float(time)}
-    return results
+        subdir_path = os.path.join(path_to_results, subdir)
+        try:
+            run_files = [e for e in os.scandir(subdir_path) if e.is_file()]
+        except FileNotFoundError:
+            run_files = []
+        headers = [f"{subdir}-{i}" for i in range(len(run_files))]
+        if not headers:
+            continue
+        parsed, _, _ = get_val_losses(headers, results_file)
+        final_losses = []
+        final_times = []
+        for h in headers:
+            # Only include runs that produced values
+            if parsed[h]["loss"]:
+                final_losses.append(parsed[h]["loss"][-1])
+            if parsed[h]["time"]:
+                final_times.append(parsed[h]["time"][-1])
+        if not final_losses or not final_times:
+            continue
+        loss = float(np.mean(final_losses))
+        time = float(np.mean(final_times))
+        results[subdir] = {"loss": round(loss, 4), "time": round(time, 2)}
+        formatted_results += f"\n{subdir} —— Loss: {results[subdir]['loss']}, Time: {results[subdir]['time']}"
+
+    formatted_results += f"\n{sep}\n\n"
+    return results, formatted_results
 
 
 def get_args() -> argparse.Namespace:
@@ -163,6 +190,7 @@ def get_args() -> argparse.Namespace:
     parser.add_argument("--path", type=str, default="", help="The subdir of logs if --extract-losses, logs if --print-final-stats")
     parser.add_argument("--name", type=str, default="", help="The name if --extract-losses")
     parser.add_argument("--offset", type=int, default=0, help="The offset if --extract-losses")
+    return parser.parse_args()
 
 
 if __name__ == "__main__":
@@ -171,10 +199,11 @@ if __name__ == "__main__":
         vallosses = extract_vallosses(path=args.path, name=args.name, offset=args.offset)
         with open(os.path.join("logs", args.path, "vallosses.md"), "w") as f:
             f.write(vallosses)
-    if args.print_final_state:
+    if args.print_final_stats:
         import rich
         print()
-        rich.print(get_all_final_losses_and_times(args.path))
+        _, formatted_results = get_all_final_losses_and_times(args.path)
+        rich.print(formatted_results)
         print()
-    if args.extract_losses or args.print_final_state:
-        sys.exit(0)  # only perform the randomly typed shit below if nothing else is done
+    if args.extract_losses or args.print_final_stats:
+        sys.exit(0)  # only perform the freeform code if nothing else is done
