@@ -123,7 +123,7 @@ def extract_vallosses(path: str, name: str, offset: int = 0):
     files = sorted(os.listdir(path))
     results = ""
     for i, file in enumerate(files):
-        title = f"## {name} {i + offset}"
+        title = f"## {name}-{i + offset}"
         with open(os.path.join(path, file), "r") as f:
             lines = f.readlines()
         lines = [line.strip() for line in lines if "val_loss" in line and line.startswith("step:") and line.strip()]
@@ -152,11 +152,34 @@ def get_all_final_losses_and_times(path_to_results: str) -> dict[str, dict[Liter
 
     # Extract val_losses and times
     results = {}
+    formatted_results = f"{'-'*20}"
     for subdir in subdirs:
-        loss = float(np.mean(get_final_val_losses(filename=results_file, header_numbers=[subdir])))
-        time = float(np.mean(get_final_times(filename=results_file, header_numbers=[subdir])))
-        results[subdir] = {"loss": loss, "time": time}
-    return results
+        subdir_path = os.path.join(path_to_results, subdir)
+        try:
+            run_files = [e for e in os.scandir(subdir_path) if e.is_file()]
+        except FileNotFoundError:
+            run_files = []
+        headers = [f"{subdir}-{i}" for i in range(len(run_files))]
+        if not headers:
+            continue
+        parsed, _, _ = get_val_losses(headers, results_file)
+        final_losses = []
+        final_times = []
+        for h in headers:
+            # Only include runs that produced values
+            if parsed[h]["loss"]:
+                final_losses.append(parsed[h]["loss"][-1])
+            if parsed[h]["time"]:
+                final_times.append(parsed[h]["time"][-1])
+        if not final_losses or not final_times:
+            continue
+        loss = float(np.mean(final_losses))
+        time = float(np.mean(final_times))
+        results[subdir] = {"loss": round(loss, 4), "time": round(time, 2)}
+        formatted_results += f"{subdir} —— Loss: {results[subdir]['loss']}, Time: {results[subdir]['time']}"
+
+    formatted_results += f"{'-'*20}\n\n"
+    return results, formatted_results
 
 
 def get_args() -> argparse.Namespace:
@@ -178,7 +201,8 @@ if __name__ == "__main__":
     if args.print_final_stats:
         import rich
         print()
-        rich.print(get_all_final_losses_and_times(args.path))
+        _, formatted_results = get_all_final_losses_and_times(args.path)
+        rich.print(formatted_results)
         print()
     if args.extract_losses or args.print_final_stats:
         sys.exit(0)  # only perform the randomly typed shit below if nothing else is done
