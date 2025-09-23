@@ -226,8 +226,7 @@ class Block(nn.Module):
             # And reuse it
             x_concat = F.linear(x_concat, self.compressor)
             x = torch.cat([x, x_concat], dim=-1)
-        else:
-            x = x + self.mlp(norm(x))
+        x = x + self.mlp(norm(x))
         return x
 
 # -----------------------------------------------------------------------------
