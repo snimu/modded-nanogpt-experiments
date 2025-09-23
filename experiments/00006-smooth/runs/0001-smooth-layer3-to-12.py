@@ -212,8 +212,8 @@ class Smoother(nn.Module):
 
     def forward(self, x: Tensor, x_decision: Tensor):
         scores = torch.sigmoid(F.linear(self.transform(x_decision), self.smooth))
-        x[:, 1:] = x[:, 1:] + scores[:, :-1] * x[:, :-1]
-        return x
+        tail = x[:, 1:] + scores[:, :-1] * x[:, :-1]
+        return torch.cat((x[:, :1], tail), dim=1)
 
 
 # -----------------------------------------------------------------------------
