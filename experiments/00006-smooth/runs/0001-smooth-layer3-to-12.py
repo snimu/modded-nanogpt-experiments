@@ -429,7 +429,8 @@ for param in model.parameters():
     dist.broadcast(param.detach(), 0)
 
 # collect the parameters to optimize
-hidden_matrix_params = [*model.smoother.parameters()] + sorted((p for p in model.blocks.parameters() if p.ndim >= 2), key=lambda x: x.size(), reverse=True)
+hidden_matrix_params = sorted((p for p in model.blocks.parameters() if p.ndim >= 2), key=lambda x: x.size(), reverse=True)
+smoother_params = [*model.smoother.parameters()]
 embed_params = [
     *model.embed1.parameters(),
     *model.embed2.parameters(),
@@ -438,7 +439,7 @@ embed_params = [
 scalar_params = [model.scalars]
 head_params: list[nn.Parameter] = [model.lm_head_w]
 # sanity check
-params_collections = [hidden_matrix_params, embed_params, scalar_params, head_params]
+params_collections = [hidden_matrix_params, smoother_params, embed_params, scalar_params, head_params]
 optimized_parameters_set = {p for params in params_collections for p in params}
 assert optimized_parameters_set == {*model.parameters()}
 assert len(optimized_parameters_set) == sum(len(lst) for lst in params_collections)
@@ -449,7 +450,8 @@ adam_param_groups = [dict(params=head_params, lr=1/320), dict(params=embed_param
 # discovered by @fernbear.bsky.social https://x.com/hi_tysam/status/1879692937589875094
 optimizer1 = torch.optim.AdamW(adam_param_groups, betas=(0.8, 0.95), eps=1e-10, weight_decay=0.0, fused=True)
 optimizer2 = Muon(hidden_matrix_params, lr=0.025, momentum=0.95, rank=rank, world_size=world_size)
-optimizers: list[torch.optim.Optimizer] = [optimizer1, optimizer2]
+optimizer3 = Muon(smoother_params, lr=0.025, momentum=0.95, rank=rank, world_size=world_size)
+optimizers: list[torch.optim.Optimizer] = [optimizer1, optimizer2, optimizer3]
 def opt_params(opt: torch.optim.Optimizer) -> list[nn.Parameter]:
     return [p for group in opt.param_groups for p in group["params"]]
 opt2params = {opt: opt_params(opt) for opt in optimizers}
