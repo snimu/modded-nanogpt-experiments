@@ -198,6 +198,7 @@ def plot_final_losses_over_names(
 
     # Annotate each bar with its loss value (rounded to 4 decimals)
     bars = plt.bar(names, losses)
+    plt.xticks(rotation=50, ha='right')
     plt.axhline(2.92, color='red', linewidth=1)
     plt.ylim(2.9, 2.93)
     ax = plt.gca()
@@ -212,6 +213,30 @@ def plot_final_losses_over_names(
             va="bottom",
             fontsize=9,
         )
+    plt.show()
+
+
+def plot_final_losses_over_names_by_method(
+        filename: str,
+        method_to_header_numbers: dict[str, list[str | int]],
+        x_labels: list[str],
+        x_axis_label: str = "layer",
+        draw_target_loss: bool = True,
+) -> None:
+    l0 = len(method_to_header_numbers[list(method_to_header_numbers.keys())[0]])
+    assert all(len(method_to_header_numbers[method]) == l0 for method in method_to_header_numbers)
+    assert len(x_labels) == l0
+    
+    markers = ['o', '^', 's', 'D', 'x', '*', '.', '+']
+    for method, marker in zip(method_to_header_numbers, markers, strict=False):
+        losses = get_final_val_losses(filename, method_to_header_numbers[method])
+        plt.plot(x_labels, losses, marker=marker, label=method)
+    plt.grid()
+    plt.ylabel("Final validation loss")
+    plt.xlabel(x_axis_label.capitalize())
+    plt.legend()
+    if draw_target_loss:
+        plt.axhline(2.92, color='red', linewidth=1)
     plt.show()
 
 
@@ -268,10 +293,27 @@ if __name__ == "__main__":
     # )
     # plot_final_losses_over_names(
     #     filename="results.md",
-    #     header_numbers=[21, 22] + [f"23{i:02d}" for i in range(15)] + [24],
+    #     header_numbers=[f"5001-add-normed-skip{i}-to-x-out-0" for i in range(15)],
+    #     names=[f"skip{i}" for i in range(15)],
+    # )
+    # plot_val_loss(
+    #     filename="results.md",
+    #     header_numbers=[2312, "0 0"],
+    #     x_axis="time",
     # )
     plot_val_loss(
+        header_numbers=[f"5001-add-normed-skip{i+8}-to-x-out-0" for i in range(7)],
         filename="results.md",
-        header_numbers=[2312, "0 0"],
-        x_axis="time",
+        x_axis="step",
     )
+
+    # # CONCAT VS ADD
+    # plot_final_losses_over_names_by_method(
+    #     filename="results.md",
+    #     method_to_header_numbers={
+    #         "concat": [f"23{i:02d}" for i in range(15)],
+    #         "add": [f"5001-add-normed-skip{i}-to-x-out-0" for i in range(15)],
+    #     },
+    #     x_labels=[str(i) for i in range(15)],
+    #     x_axis_label="Layer",
+    # )

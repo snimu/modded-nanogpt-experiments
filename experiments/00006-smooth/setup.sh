@@ -6,4 +6,4 @@ uv pip install --pre torch --index-url https://download.pytorch.org/whl/nightly/
 uv run data/cached_fineweb10B.py
 
 cd runs
-torchrun --standalone --nproc_per_node=8 0-template.py
+torchrun --standalone --nproc_per_node=8 0001-smooth-layer3-to-12.py

@@ -1,68 +1,39 @@
 pip install uv
 uv venv
 source .venv/bin/activate
-uv pip install numpy tqdm torch huggingface-hub matplotlib rich
+uv pip install numpy tqdm torch huggingface-hub matplotlib rich scipy torchinfo
 uv pip install --pre torch --index-url https://download.pytorch.org/whl/nightly/cu126 --upgrade
 uv run data/cached_fineweb10B.py
 
-cd runs
+for ((i=0; i<35; i++)); do
+  cd runs
+  export RUN_ID=$i
+  torchrun --standalone --nproc-per-node=8 5002-add-normed-skip11-to-x-out-record.py
+  cd .. && python plot_results.py --print-final-stats --path=logs
+done
 
-torchrun --standalone --nproc-per-node=8 3000-concat-x00-last-mlp.py
+for ((i=0; i<15; i++)); do
+  cd runs
+  torchrun --standalone --nproc-per-node=8 5001-add-normed-skips-to-x-out.py --skip-layer=$i
+  cd .. && python plot_results.py --print-final-stats --path=logs
+done
+
+cd runs
+torchrun --standalone --nproc-per-node=8 5000-add-skips-to-x-out.py --skip-layer=10
 cd .. && python plot_results.py --print-final-stats --path=logs
 cd runs
-torchrun --standalone --nproc-per-node=8 3001-concat-x01-last-mlp.py
+torchrun --standalone --nproc-per-node=8 5000-add-skips-to-x-out.py --skip-layer=11
 cd .. && python plot_results.py --print-final-stats --path=logs
 cd runs
-torchrun --standalone --nproc-per-node=8 3002-concat-x02-last-mlp.py
+torchrun --standalone --nproc-per-node=8 5000-add-skips-to-x-out.py --skip-layer=12
 cd .. && python plot_results.py --print-final-stats --path=logs
 cd runs
-torchrun --standalone --nproc-per-node=8 3010-concat-skip0-last-mlp.py
+torchrun --standalone --nproc-per-node=8 5000-add-skips-to-x-out.py --skip-layer=13
 cd .. && python plot_results.py --print-final-stats --path=logs
 cd runs
-torchrun --standalone --nproc-per-node=8 3011-concat-skip1-last-mlp.py
+torchrun --standalone --nproc-per-node=8 5000-add-skips-to-x-out.py --skip-layer=14
 cd .. && python plot_results.py --print-final-stats --path=logs
-cd runs
-torchrun --standalone --nproc-per-node=8 3012-concat-skip2-last-mlp.py
-cd .. && python plot_results.py --print-final-stats --path=logs
-cd runs
-torchrun --standalone --nproc-per-node=8 3013-concat-skip3-last-mlp.py
-cd .. && python plot_results.py --print-final-stats --path=logs
-cd runs
-torchrun --standalone --nproc-per-node=8 3014-concat-skip4-last-mlp.py
-cd .. && python plot_results.py --print-final-stats --path=logs
-cd runs
-torchrun --standalone --nproc-per-node=8 3015-concat-skip5-last-mlp.py
-cd .. && python plot_results.py --print-final-stats --path=logs
-cd runs
-torchrun --standalone --nproc-per-node=8 3016-concat-skip6-last-mlp.py
-cd .. && python plot_results.py --print-final-stats --path=logs
-cd runs
-torchrun --standalone --nproc-per-node=8 3017-concat-skip7-last-mlp.py
-cd .. && python plot_results.py --print-final-stats --path=logs
-cd runs
-torchrun --standalone --nproc-per-node=8 3018-concat-skip8-last-mlp.py
-cd .. && python plot_results.py --print-final-stats --path=logs
-cd runs
-torchrun --standalone --nproc-per-node=8 3019-concat-skip9-last-mlp.py
-cd .. && python plot_results.py --print-final-stats --path=logs
-cd runs
-torchrun --standalone --nproc-per-node=8 3020-concat-skip10-last-mlp.py
-cd .. && python plot_results.py --print-final-stats --path=logs
-cd runs
-torchrun --standalone --nproc-per-node=8 3021-concat-skip11-last-mlp.py
-cd .. && python plot_results.py --print-final-stats --path=logs
-cd runs
-torchrun --standalone --nproc-per-node=8 3022-concat-skip12-last-mlp.py
-cd .. && python plot_results.py --print-final-stats --path=logs
-cd runs
-torchrun --standalone --nproc-per-node=8 3023-concat-skip13-last-mlp.py
-cd .. && python plot_results.py --print-final-stats --path=logs
-cd runs
-torchrun --standalone --nproc-per-node=8 3024-concat-skip14-last-mlp.py
-cd .. && python plot_results.py --print-final-stats --path=logs
-cd runs
-torchrun --standalone --nproc-per-node=8 3025-concat-skip15-last-mlp.py
-cd .. && python plot_results.py --print-final-stats --path=logs
+
 cd runs
 torchrun --standalone --nproc-per-node=8 21-concat-x00-from-previous-record.py
 cd .. && python plot_results.py --print-final-stats --path=logs
@@ -118,6 +89,62 @@ cd runs
 torchrun --standalone --nproc-per-node=8 2314-concat-skip14-from-previous-record.py
 cd .. && python plot_results.py --print-final-stats --path=logs
 cd runs
+torchrun --standalone --nproc-per-node=8 3000-concat-x00-last-mlp.py
+cd .. && python plot_results.py --print-final-stats --path=logs
+cd runs
+torchrun --standalone --nproc-per-node=8 3001-concat-x01-last-mlp.py
+cd .. && python plot_results.py --print-final-stats --path=logs
+cd runs
+torchrun --standalone --nproc-per-node=8 3002-concat-x02-last-mlp.py
+cd .. && python plot_results.py --print-final-stats --path=logs
+cd runs
+torchrun --standalone --nproc-per-node=8 3010-concat-skip0-last-mlp.py
+cd .. && python plot_results.py --print-final-stats --path=logs
+cd runs
+torchrun --standalone --nproc-per-node=8 3011-concat-skip1-last-mlp.py
+cd .. && python plot_results.py --print-final-stats --path=logs
+cd runs
+torchrun --standalone --nproc-per-node=8 3012-concat-skip2-last-mlp.py
+cd .. && python plot_results.py --print-final-stats --path=logs
+cd runs
+torchrun --standalone --nproc-per-node=8 3013-concat-skip3-last-mlp.py
+cd .. && python plot_results.py --print-final-stats --path=logs
+cd runs
+torchrun --standalone --nproc-per-node=8 3014-concat-skip4-last-mlp.py
+cd .. && python plot_results.py --print-final-stats --path=logs
+cd runs
+torchrun --standalone --nproc-per-node=8 3015-concat-skip5-last-mlp.py
+cd .. && python plot_results.py --print-final-stats --path=logs
+cd runs
+torchrun --standalone --nproc-per-node=8 3016-concat-skip6-last-mlp.py
+cd .. && python plot_results.py --print-final-stats --path=logs
+cd runs
+torchrun --standalone --nproc-per-node=8 3017-concat-skip7-last-mlp.py
+cd .. && python plot_results.py --print-final-stats --path=logs
+cd runs
+torchrun --standalone --nproc-per-node=8 3018-concat-skip8-last-mlp.py
+cd .. && python plot_results.py --print-final-stats --path=logs
+cd runs
+torchrun --standalone --nproc-per-node=8 3019-concat-skip9-last-mlp.py
+cd .. && python plot_results.py --print-final-stats --path=logs
+cd runs
+torchrun --standalone --nproc-per-node=8 3020-concat-skip10-last-mlp.py
+cd .. && python plot_results.py --print-final-stats --path=logs
+cd runs
+torchrun --standalone --nproc-per-node=8 3021-concat-skip11-last-mlp.py
+cd .. && python plot_results.py --print-final-stats --path=logs
+cd runs
+torchrun --standalone --nproc-per-node=8 3022-concat-skip12-last-mlp.py
+cd .. && python plot_results.py --print-final-stats --path=logs
+cd runs
+torchrun --standalone --nproc-per-node=8 3023-concat-skip13-last-mlp.py
+cd .. && python plot_results.py --print-final-stats --path=logs
+cd runs
+torchrun --standalone --nproc-per-node=8 3024-concat-skip14-last-mlp.py
+cd .. && python plot_results.py --print-final-stats --path=logs
+cd runs
+torchrun --standalone --nproc-per-node=8 3025-concat-skip15-last-mlp.py
+torchrun --standalone --nproc-per-node=8 4022-concat-skip12-last-mlp-compressed.py
 
 torchrun --standalone --nproc_per_node=8 0-baseline.py
 torchrun --standalone --nproc_per_node=8 1-skip-05-05-init.py
