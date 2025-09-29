@@ -211,9 +211,8 @@ def next_multiple_of_n(v: float | int, *, n: int):
     return next(x for x in range(n, int(v) + 1 + n, n) if x >= v)
 
 class GPT(nn.Module):
-    def __init__(self, vocab_size: int, num_layers: int, num_heads: int, model_dim: int, max_seq_len: int, skip_layer: int):
+    def __init__(self, vocab_size: int, num_layers: int, num_heads: int, model_dim: int, max_seq_len: int):
         super().__init__()
-        self.skip_layer = skip_layer
         self.embed1 = nn.Embedding(vocab_size, model_dim)
         self.embed2 = nn.Embedding(vocab_size, model_dim)
         # token value embeddings by @KoszarskyB - inspired by @Grad62304977's value residual implementation following https://arxiv.org/abs/2410.17897
@@ -303,7 +302,7 @@ class GPT(nn.Module):
             skip_connections.append(x)
 
         skip_lambdas = self.scalars[-2:]
-        x = norm(x) * skip_lambdas[0] + norm(skip_connections[self.skip_layer]) * skip_lambdas[1]
+        x = norm(x) * skip_lambdas[0] + norm(skip_connections[11]) * skip_lambdas[1]
         if self.training:
             logits: Tensor = F.linear(x.flatten(end_dim=1), self.lm_head_w.bfloat16()).float()
             loss = F.cross_entropy(15 * logits * torch.rsqrt(logits.square() + 225), target_seq)
@@ -348,10 +347,6 @@ def distributed_data_generator(filename_pattern: str, batch_size: int, rank : in
 # -----------------------------------------------------------------------------
 # int main
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--skip-layer", type=int, default=12)
-skip_layer = parser.parse_args().skip_layer
-
 @dataclass
 class Hyperparameters:
     # data
@@ -361,7 +356,7 @@ class Hyperparameters:
     train_seq_len = 64*1024 # FlexAttention sequence length
     val_seq_len = 4*64*1024 # FlexAttention sequence length for validation
     # optimization
-    num_iterations = 5690 # number of iterations to run
+    num_iterations = 5580 # number of iterations to run
     cooldown_frac = 0.7 # fraction of training spent cooling down the learning rate
     # architecture
     vocab_size = 50257
@@ -385,8 +380,8 @@ master_process = (rank == 0) # this process will do logging, checkpointing etc.
 # begin logging
 if master_process:
     run_id_full = f"{run_id:03d}_{uuid.uuid4()}"
-    os.makedirs(f"../logs/5001-add-normed-skip{skip_layer}-to-x-out", exist_ok=True)
-    logfile = f"../logs/5001-add-normed-skip{skip_layer}-to-x-out/{run_id_full}.txt"
+    os.makedirs("../logs/5002-add-normed-skip11-to-x-out-record", exist_ok=True)
+    logfile = "../logs/5002-add-normed-skip11-to-x-out-record/{run_id_full}.txt"
     print(logfile)
 def print0(s, console=False):
     if master_process:
@@ -412,7 +407,7 @@ print0("="*100)
 ########################################
 
 model: nn.Module = GPT(vocab_size=args.vocab_size, num_layers=16, num_heads=8, model_dim=1024,
-                       max_seq_len=max(args.train_seq_len, args.val_seq_len), skip_layer=skip_layer).cuda()
+                       max_seq_len=max(args.train_seq_len, args.val_seq_len)).cuda()
 for m in model.modules():
     if isinstance(m, nn.Embedding):
         m.bfloat16()
