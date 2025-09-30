@@ -317,7 +317,7 @@ class GPT(nn.Module):
             skip_connections.append(x)
 
         x = torch.cat([x, F.linear(skip_connections[11], self.compressor)], dim=-1)
-        x = norm(self.out_mlp(x))
+        x = norm(x + self.out_mlp(norm(x)))
         if self.training:
             logits: Tensor = F.linear(x.flatten(end_dim=1), self.lm_head_w.bfloat16()).float()
             loss = F.cross_entropy(15 * logits * torch.rsqrt(logits.square() + 225), target_seq)
