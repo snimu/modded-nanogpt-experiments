@@ -617,9 +617,9 @@ def distributed_data_generator(
 @dataclass
 class Hyperparameters:
     # data
-    train_files = "data/fineweb10B/fineweb_train_*.bin"  # input .bin to train on
+    train_files = "../data/fineweb10B/fineweb_train_*.bin"  # input .bin to train on
     val_files = (
-        "data/fineweb10B/fineweb_val_*.bin"  # input .bin to eval validation loss on
+        "../data/fineweb10B/fineweb_val_*.bin"  # input .bin to eval validation loss on
     )
     val_tokens = 10485760  # how many tokens of validation data? it's important to keep this fixed for consistent comparisons
     train_seq_len = 64 * 1024  # FlexAttention sequence length
@@ -654,7 +654,7 @@ master_process = rank == 0  # this process will do logging, checkpointing etc.
 # begin logging
 if master_process:
     run_id_full = f"{run_id:03d}_{uuid.uuid4()}"
-    path = f"logs"
+    path = "../logs/7000-updated-record"
     os.makedirs(path, exist_ok=True)
     logfile = f"{path}/{run_id_full}.txt"
     print(logfile)
