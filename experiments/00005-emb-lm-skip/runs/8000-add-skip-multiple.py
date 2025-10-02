@@ -674,7 +674,7 @@ master_process = rank == 0  # this process will do logging, checkpointing etc.
 # begin logging
 if master_process:
     run_id_full = f"{run_id:03d}_{uuid.uuid4()}"
-    path = f"../logs/8000-add-skip-multiple-{len(skip_layers)}"
+    path = f"../logs/8000-add-skip-multiple-{len(skip_layers)}-method-{cli_args.choose_by}"
     os.makedirs(path, exist_ok=True)
     logfile = f"{path}/{run_id_full}.txt"
     print(logfile)
