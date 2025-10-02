@@ -1,6 +1,7 @@
 import argparse
 import os
 import sys
+import random
 
 with open(sys.argv[0]) as f:
     code = f.read()  # read the code of this file ASAP, for logging
@@ -646,9 +647,16 @@ class Hyperparameters:
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--num-skips", "-n", type=int, default=2)
-num_skips = parser.parse_args().num_skips
-assert 2 <= num_skips <= 15
-skip_layers = [11, 4, 8, 13, 9, 0, 10, 5, 12, 6, 7, 3, 14, 2, 1][:num_skips]
+parser.add_argument("--choose-by", "-c", choices=["random", "btw", "wtb"], default="random", help="btw=best-to-worst, wtb=worst-to-best")
+cli_args = parser.parse_args()
+assert 2 <= cli_args.num_skips <= 15
+skip_layers = [11, 10, 8, 4, 9, 3, 13, 0, 12, 5, 6, 14, 7, 2, 1]  # sorted from lowest to highest final loss from a single ablation
+if cli_args.choose_by == "random":
+    skip_layers = random.sample(skip_layers, cli_args.num_skips)
+elif cli_args.choose_by == "btw":
+    skip_layers = skip_layers[:cli_args.num_skips]
+else:  # wtb
+    skip_layers = list(reversed(skip_layers))[:cli_args.num_skips]
 args = Hyperparameters()
 
 run_id = int(os.environ.get("RUN_ID", 0))
@@ -666,8 +674,7 @@ master_process = rank == 0  # this process will do logging, checkpointing etc.
 # begin logging
 if master_process:
     run_id_full = f"{run_id:03d}_{uuid.uuid4()}"
-    path = "../logs/8000-add-skip-"
-    path += "-".join([str(i) for i in sorted(skip_layers)])
+    path = f"../logs/8000-add-skip-multiple-{len(skip_layers)}"
     os.makedirs(path, exist_ok=True)
     logfile = f"{path}/{run_id_full}.txt"
     print(logfile)
