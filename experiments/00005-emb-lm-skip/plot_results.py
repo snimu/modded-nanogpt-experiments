@@ -60,6 +60,7 @@ def plot_val_loss(
         filename: str,
         x_axis: str = "step",
         average_over: dict[str, tuple[str, int]] | None = None,
+        legend: bool = True,
 ):
     parsed, header_numbers, descriptions = get_val_losses(header_numbers, filename, average_over)
 
@@ -68,7 +69,8 @@ def plot_val_loss(
         plt.plot(parsed[hnum][x_axis], parsed[hnum]["loss"], label=f"{hnum}{description}")
     plt.xlabel("step" if x_axis == "step" else "time (s)")
     plt.ylabel("val_loss")
-    plt.legend()
+    if legend:
+        plt.legend()
     plt.grid()
     plt.show()
 
@@ -195,6 +197,8 @@ def plot_final_losses_over_names(
         filename: str,
         header_numbers: list[int | str],
         names: list[str] | None = None,
+        xaxis_label: str | None = None,
+        yaxis_label: str | None = None,
 ):
     if names is not None:
         assert isinstance(names, list), f"{type(names)=}"
@@ -221,6 +225,10 @@ def plot_final_losses_over_names(
             va="bottom",
             fontsize=9,
         )
+    if xaxis_label:
+        plt.xlabel(xaxis_label)
+    if yaxis_label:
+        plt.ylabel(yaxis_label)
     plt.show()
 
 
@@ -302,18 +310,31 @@ if __name__ == "__main__":
     # plot_final_losses_over_names(
     #     filename="results.md",
     #     header_numbers=[f"5001-add-normed-skip{i}-to-x-out-0" for i in range(15)],
-    #     names=[f"skip{i}" for i in range(15)],
+    #     names=[f"Layer {i}" for i in range(15)],
+    #     xaxis_label="Skip from layer",
+    #     yaxis_label="Final validation loss",
     # )
     # plot_val_loss(
     #     filename="results.md",
     #     header_numbers=[2312, "0 0"],
     #     x_axis="time",
     # )
-    plot_val_loss(
-        header_numbers=[f"5001-add-normed-skip{i+8}-to-x-out-0" for i in range(7)],
-        filename="results.md",
-        x_axis="step",
-    )
+    # plot_val_loss(
+    #     header_numbers=["5001-add-normed-skip11-to-x-out-0"],
+    #     filename="results.md",
+    #     x_axis="step",
+    #     legend=False,
+    # )
+
+    # plot_val_loss(
+    #     filename="results.md",
+    #     header_numbers=["7000-updated-record-0", "7001-add-skip11-from-updated-record-0"],
+    #     average_over={
+    #         "Baseline PR#137": ["7000-updated-record-0"],
+    #         "+ skip from layer 11": ["7001-add-skip11-from-updated-record-0"],
+    #     },
+    #     x_axis="time",
+    # )
 
     # # CONCAT VS ADD
     # plot_final_losses_over_names_by_method(
@@ -325,3 +346,54 @@ if __name__ == "__main__":
     #     x_labels=[str(i) for i in range(15)],
     #     x_axis_label="Layer",
     # )
+
+    # # CONCAT ONLY
+    # plot_final_losses_over_names(
+    #     filename="results.md",
+    #     header_numbers=[21, 22] + [f"23{i:02d}" for i in range(15)] + [24],
+    #     names=["Input emb", "Extra emb"] + [f"Layer {i}" for i in range(15)] + ["Layer 15"],
+    #     yaxis_label="Final validation loss",
+    # )
+
+    # # VAL LOSSES CONCAT
+    # plot_val_loss(
+    #     filename="results.md",
+    #     header_numbers=[2312],
+    #     average_over={"Concat layer 12 outputs to output latents": [2312]},
+    #     x_axis="time",
+    #     legend=False,
+    # )
+
+    # T-TEST ANALYSIS
+    # losses = get_final_val_losses(
+    #     filename="results-t-test.md",
+    #     header_numbers=[f"7002-add-skip11-record-from-updated-record-{i}" for i in range(10)],
+    # )
+    # loss_stats = test_mean_below(losses)
+    # times = get_final_times(
+    #     filename="results-t-test.md",
+    #     header_numbers=[f"7002-add-skip11-record-from-updated-record-{i}" for i in range(10)],
+    # )
+    # time_stats = test_mean_below(times)
+
+    # print(losses)
+    # print(
+    #     f"- Mean: {loss_stats['sample_mean']}\n",
+    #     f"- Std: {loss_stats['sample_std']}\n",
+    #     f"- P-value: {loss_stats['p_value']}\n",
+    # )
+    # print(times)
+    # print(
+    #     f"- Mean: {time_stats['sample_mean']}\n",
+    #     f"- Std: {time_stats['sample_std']}\n",
+    # )
+
+    # SORT THE HEADER NUMBERS BY LOSS
+    hnums = [f"5001-add-normed-skip{i}-to-x-out-0" for i in range(15)]
+    losses = get_final_val_losses("results.md", hnums)
+    indices = np.argsort(losses).tolist()
+    sorted_hnums = []
+    for idx in indices:
+        sorted_hnums.append(hnums[idx])
+    print(indices)
+    print(sorted_hnums)
