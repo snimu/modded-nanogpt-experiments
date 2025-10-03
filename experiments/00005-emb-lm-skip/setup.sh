@@ -5,6 +5,107 @@ uv pip install numpy tqdm torch huggingface-hub matplotlib rich scipy torchinfo
 uv pip install --pre torch --index-url https://download.pytorch.org/whl/nightly/cu126 --upgrade
 uv run data/cached_fineweb10B.py
 
+# NEW ABLATIONS
+# 1. Try out changed seq-len schedule
+cd runs
+torchrun --standalone --nproc-per-node=8 7004-add-skip11-record-from-updated-record-changed-seq-len-schedule.py
+cd .. && python plot_results.py --print-final-stats --path=logs
+# 2. Try out norm-sum-norm
+cd runs
+torchrun --standalone --nproc-per-node=8 7005-add-skip11-record-from-updated-record-norm-sum-norm.py
+cd .. && python plot_results.py --print-final-stats --path=logs
+# 3. Time old and new record
+for ((i=0; i<5; i++)); do
+  export RUN_ID=$i
+  cd runs
+  torchrun --standalone --nproc-per-node=8 7000-updated-record.py
+  cd .. && python plot_results.py --print-final-stats --path=logs
+  cd runs
+  torchrun --standalone --nproc-per-node=8 7002-add-skip11-record-from-updated-record.py
+  cd .. && python plot_results.py --print-final-stats --path=logs
+done
+# 4. Ablate multiple skips
+for ((i=0; i<3; i++)); do
+  for ((j=2; i<15; i++)); do
+    export RUN_ID=$i
+    cd runs
+    torchrun --standalone --nproc-per-node=8 8000-add-skip-multiple.py -n=$j -c=random
+    cd .. && python plot_results.py --print-final-stats --path=logs
+    cd runs
+    torchrun --standalone --nproc-per-node=8 8000-add-skip-multiple.py -n=$j -c=btw
+    cd .. && python plot_results.py --print-final-stats --path=logs
+    cd runs
+    torchrun --standalone --nproc-per-node=8 8000-add-skip-multiple.py -n=$j -c=wtb
+    cd .. && python plot_results.py --print-final-stats --path=logs
+    cd runs
+    torchrun --standalone --nproc-per-node=8 8000-add-skip-multiple.py -n=$j -c=lth
+    cd .. && python plot_results.py --print-final-stats --path=logs
+    cd runs
+    torchrun --standalone --nproc-per-node=8 8000-add-skip-multiple.py -n=$j -c=htl
+    cd .. && python plot_results.py --print-final-stats --path=logs
+  done
+done
+
+# Compare new to old record
+for ((i=0; i<2; i++)); do
+  export RUN_ID=$i
+  cd runs
+  torchrun --standalone --nproc-per-node=8 7000-updated-record.py
+  cd .. && python plot_results.py --print-final-stats --path=logs
+  cd runs
+  torchrun --standalone --nproc-per-node=8 7002-add-skip11-record-from-updated-record.py
+  cd .. && python plot_results.py --print-final-stats --path=logs
+done
+
+# Ablate adding multiple skips
+for ((i=0; i<3; i++)); do
+  for ((j=2; i<15; i++)); do
+    export RUN_ID=$i
+    cd runs
+    torchrun --standalone --nproc-per-node=8 8000-add-skip-multiple.py -n=$j -c=random
+    cd .. && python plot_results.py --print-final-stats --path=logs
+    cd runs
+    torchrun --standalone --nproc-per-node=8 8000-add-skip-multiple.py -n=$j -c=btw
+    cd .. && python plot_results.py --print-final-stats --path=logs
+    cd runs
+    torchrun --standalone --nproc-per-node=8 8000-add-skip-multiple.py -n=$j -c=wtb
+    cd .. && python plot_results.py --print-final-stats --path=logs
+  done
+done
+
+# Record attempt
+for ((i=0; i<35; i++)); do
+  export RUN_ID=$i
+  cd runs
+  torchrun --standalone --nproc-per-node=8 7002-add-skip11-record-from-updated-record.py
+  cd .. && python plot_results.py --print-final-stats --path=logs
+done
+
+cd runs
+torchrun --standalone --nproc-per-node=8 7000-updated-record.py
+cd .. && python plot_results.py --print-final-stats --path=logs
+cd runs
+torchrun --standalone --nproc-per-node=8 7001-add-skip11-from-updated-record.py
+cd .. && python plot_results.py --print-final-stats --path=logs
+
+cd runs
+torchrun --standalone --nproc-per-node=8 3211-concat-skip11-last-mlp-with-cutoff-and-activation.py
+cd .. && python plot_results.py --print-final-stats --path=logs
+cd runs
+torchrun --standalone --nproc-per-node=8 3311-concat-skip11-last-mlp-with-cutoff.py
+cd .. && python plot_results.py --print-final-stats --path=logs
+
+for ((i=0; i<15; i++)); do
+  cd runs
+  torchrun --standalone --nproc-per-node=8 6000-concat-skips-last-mlp-with-projection.py --skip-layer=$i --compressed-dim=128
+  torchrun --standalone --nproc-per-node=8 6000-concat-skips-last-mlp-with-projection.py --skip-layer=$i --compressed-dim=256
+  cd .. && python plot_results.py --print-final-stats --path=logs
+done
+
+cd runs
+torchrun --standalone --nproc-per-node=8 3111-concat-skip11-last-mlp-with-projection.py
+cd .. && python plot_results.py --print-final-stats --path=logs
+
 for ((i=0; i<35; i++)); do
   cd runs
   export RUN_ID=$i

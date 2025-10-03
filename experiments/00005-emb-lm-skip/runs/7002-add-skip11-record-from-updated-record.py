@@ -626,7 +626,7 @@ class Hyperparameters:
     train_seq_len = 64 * 1024  # FlexAttention sequence length
     val_seq_len = 4 * 64 * 1024  # FlexAttention sequence length for validation
     # optimization
-    num_iterations = 5560  # number of iterations to run
+    num_iterations = 5550  # number of iterations to run
     cooldown_frac = 0.7  # fraction of training spent cooling down the learning rate
     final_lr_scale = 0.01
     # architecture
@@ -876,8 +876,9 @@ for step in range(train_steps + 1):
         val_loss /= val_steps
         del val_loader
         dist.all_reduce(val_loss, op=dist.ReduceOp.AVG)
+        skip_lambdas = model.scalars[-2:]
         print0(
-            f"step:{step}/{train_steps} val_loss:{val_loss:.6f} train_time:{training_time_ms:.0f}ms step_avg:{training_time_ms/max(step, 1):.2f}ms",
+            f"step:{step}/{train_steps} val_loss:{val_loss:.6f} train_time:{training_time_ms:.0f}ms step_avg:{training_time_ms/max(step, 1):.2f}ms lx:{skip_lambdas[0]:.3f} ls:{skip_lambdas[1]:.3f}",
             console=True,
         )
         model.train()

@@ -647,7 +647,11 @@ class Hyperparameters:
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--num-skips", "-n", type=int, default=2)
-parser.add_argument("--choose-by", "-c", choices=["random", "btw", "wtb"], default="random", help="btw=best-to-worst, wtb=worst-to-best")
+parser.add_argument(
+    "--choose-by", "-c",
+    choices=["random", "btw", "wtb", "lth", "htl"], default="random",
+    help="btw=best-to-worst, wtb=worst-to-best, lth=low-to-high, htl=high-to-low",
+)
 cli_args = parser.parse_args()
 assert 2 <= cli_args.num_skips <= 15
 skip_layers = [11, 10, 8, 4, 9, 3, 13, 0, 12, 5, 6, 14, 7, 2, 1]  # sorted from lowest to highest final loss from a single ablation
@@ -655,8 +659,12 @@ if cli_args.choose_by == "random":
     skip_layers = random.sample(skip_layers, cli_args.num_skips)
 elif cli_args.choose_by == "btw":
     skip_layers = skip_layers[:cli_args.num_skips]
-else:  # wtb
+elif cli_args.choose_by == "wtb":
     skip_layers = list(reversed(skip_layers))[:cli_args.num_skips]
+elif cli_args.choose_by == "lth":
+    skip_layers = sorted(skip_layers)[:cli_args.num_skips]
+elif cli_args.choose_by == "htl":
+    skip_layers = sorted(skip_layers, reverse=True)[:cli_args.num_skips]
 args = Hyperparameters()
 
 run_id = int(os.environ.get("RUN_ID", 0))
@@ -896,8 +904,16 @@ for step in range(train_steps + 1):
         val_loss /= val_steps
         del val_loader
         dist.all_reduce(val_loss, op=dist.ReduceOp.AVG)
+        # Print lambdas and layers with the val_loss so that I can just grep the val_loss and see them all
+        lx = model.scalars[-1]
+        lambdas = [model.scalars[-i-2] for i in range(len(skip_layers))]
         print0(
-            f"step:{step}/{train_steps} val_loss:{val_loss:.6f} train_time:{training_time_ms:.0f}ms step_avg:{training_time_ms/max(step, 1):.2f}ms",
+            f"step:{step}/{train_steps} val_loss:{val_loss:.6f} "
+            f"train_time:{training_time_ms:.0f}ms "
+            f"step_avg:{training_time_ms/max(step, 1):.2f}ms "
+            f"x-lambda: {lx} "
+            f"lambdas: {lambdas} "
+            f"skip-layers: {skip_layers}",
             console=True,
         )
         model.train()

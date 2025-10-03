@@ -1,5 +1,4 @@
 import os
-import platform
 import sys
 
 with open(sys.argv[0]) as f:
@@ -543,6 +542,7 @@ class GPT(nn.Module):
 
         skip_lambdas = self.scalars[-2:]
         x = norm(x) * skip_lambdas[0] + norm(skip_connections[11]) * skip_lambdas[1]
+        x = norm(x)
         if self.training:
             logits: Tensor = F.linear(
                 x.flatten(end_dim=1), self.lm_head_w.bfloat16()
@@ -627,7 +627,7 @@ class Hyperparameters:
     train_seq_len = 64 * 1024  # FlexAttention sequence length
     val_seq_len = 4 * 64 * 1024  # FlexAttention sequence length for validation
     # optimization
-    num_iterations = 5590  # number of iterations to run
+    num_iterations = 5550  # number of iterations to run
     cooldown_frac = 0.7  # fraction of training spent cooling down the learning rate
     final_lr_scale = 0.01
     # architecture
@@ -656,7 +656,7 @@ master_process = rank == 0  # this process will do logging, checkpointing etc.
 # begin logging
 if master_process:
     run_id_full = f"{run_id:03d}_{uuid.uuid4()}"
-    path = "../logs/7001-add-skip11-from-updated-record"
+    path = "../logs/7005-add-skip11-record-from-updated-record-norm-sum-norm"
     os.makedirs(path, exist_ok=True)
     logfile = f"{path}/{run_id_full}.txt"
     print(logfile)
@@ -801,7 +801,12 @@ def get_window_size_blocks_helper(window_size: int):
 
 
 def get_window_size_blocks(step: int):
-    x = step / args.num_iterations  # progress in training
+    # Progress in training
+    # 5960 bc it's the number of steps before a few recent updates;
+    # looking at the training curves with the original number of steps,
+    # each of these recent updates promised a stronger step reduction than was ultimately
+    # achieved, and the culprit was the changed sequence length
+    x = step / 5960
     assert 0 <= x <= 1
     # Linearly increase the block-wise sliding window size over training 128 -> 1792
     # increase by @fernbear.bsky.social; block-wise by @YouJiacheng

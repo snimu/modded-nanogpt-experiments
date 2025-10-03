@@ -1,5 +1,4 @@
 import os
-import platform
 import sys
 
 with open(sys.argv[0]) as f:
@@ -627,7 +626,7 @@ class Hyperparameters:
     train_seq_len = 64 * 1024  # FlexAttention sequence length
     val_seq_len = 4 * 64 * 1024  # FlexAttention sequence length for validation
     # optimization
-    num_iterations = 5590  # number of iterations to run
+    num_iterations = 5560  # number of iterations to run
     cooldown_frac = 0.7  # fraction of training spent cooling down the learning rate
     final_lr_scale = 0.01
     # architecture
@@ -656,7 +655,7 @@ master_process = rank == 0  # this process will do logging, checkpointing etc.
 # begin logging
 if master_process:
     run_id_full = f"{run_id:03d}_{uuid.uuid4()}"
-    path = "../logs/7001-add-skip11-from-updated-record"
+    path = "../logs/7002-add-skip11-record-from-updated-record-5560"
     os.makedirs(path, exist_ok=True)
     logfile = f"{path}/{run_id_full}.txt"
     print(logfile)
