@@ -906,7 +906,7 @@ for step in range(train_steps + 1):
         dist.all_reduce(val_loss, op=dist.ReduceOp.AVG)
         # Print lambdas and layers with the val_loss so that I can just grep the val_loss and see them all
         lx = model.scalars[-1]
-        lambdas = [model.scalars[-i-2] for i in range(len(skip_layers))]
+        lambdas = [model.scalars[-i-2].item() for i in range(len(skip_layers))]
         print0(
             f"step:{step}/{train_steps} val_loss:{val_loss:.6f} "
             f"train_time:{training_time_ms:.0f}ms "
