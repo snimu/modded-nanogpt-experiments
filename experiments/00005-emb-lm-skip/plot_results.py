@@ -1,4 +1,5 @@
 
+import ast
 import sys
 import argparse
 import os
@@ -50,6 +51,64 @@ def get_val_losses(
                 "loss": np.mean(losses, axis=0),
                 "step": steps,
                 "time": np.mean(times, axis=0),
+            }
+        parsed = new_parsed
+    return parsed, header_numbers, descriptions
+
+
+def get_val_losses_and_lambdas(
+        header_numbers: list[int | str] | dict[int | str, str],
+        filename: str,
+        average_over: dict[str, tuple[str, int]] | None = None,
+):
+    with open(filename, "r") as f:
+        lines = f.readlines()
+
+    if isinstance(header_numbers, dict):
+        descriptions = list(header_numbers.values())
+        header_numbers = list(header_numbers.keys())
+    else:
+        descriptions = ["" for _ in header_numbers]
+
+    parsed = {hnum: {"step": [], "time": [], "loss": [], "x-lambda": [], "lambdas": [], "skip-layers": []} for hnum in header_numbers}
+    for hnum in header_numbers:
+        extract= False
+        for line in lines:
+            if line.strip() == f"## {hnum}":
+                extract = True
+                continue
+            if extract and line.startswith("##"):
+                break
+            if extract and line.startswith("step:") and "val_loss" in line:
+                parsed[hnum]["loss"].append(float(line.split()[1].split("val_loss:")[-1]))
+                parsed[hnum]["step"].append(int(line.split("step:")[1].split("/")[0]))
+                parsed[hnum]["time"].append(float(line.split("train_time:")[1].split("ms")[0]) / 1000)
+                parsed[hnum]["x-lambda"].append(float(line.split("x-lambda:")[1].split("lambdas")[0].strip()))
+                parsed[hnum]["lambdas"].append(ast.literal_eval(line.split("lambdas:")[1].split("skip-layers")[0].strip()))
+                parsed[hnum]["skip-layers"].append(ast.literal_eval(line.split("skip-layers:")[1].strip()))
+    
+        if parsed[hnum]["skip-layers"]:
+            parsed[hnum]["skip-layers"] = parsed[hnum]["skip-layers"][0]  # this is otherwise redundant
+
+    if average_over is not None:
+        header_numbers = list(average_over.keys())
+        descriptions = ["" for _ in header_numbers]
+        new_parsed = {}
+        for hnum in average_over:
+            group = average_over[hnum]
+            steps = parsed[group[0]]["step"]
+            times = np.array([parsed[header]["time"] for header in group])
+            losses = np.array([parsed[header]["loss"] for header in group])
+            x_lambdas = parsed[group[0]]["x-lambda"]
+            lambdas = np.array([parsed[header]["lambdas"] for header in group])
+            skip_layers = np.array([parsed[header]["skip-layers"] for header in group])
+            new_parsed[hnum] = {
+                "loss": np.mean(losses, axis=0),
+                "step": steps,
+                "time": np.mean(times, axis=0),
+                "x-lambda": x_lambdas,
+                "lambdas": np.mean(lambdas, axis=0),
+                "skip_layers": skip_layers,
             }
         parsed = new_parsed
     return parsed, header_numbers, descriptions
@@ -364,15 +423,16 @@ if __name__ == "__main__":
     #     legend=False,
     # )
 
-    # T-TEST ANALYSIS
+    # # T-TEST ANALYSIS
+    # hnums = [f"7002-add-skip11-record-from-updated-record-5550steps-{i}" for i in range(22)]
     # losses = get_final_val_losses(
     #     filename="results-t-test.md",
-    #     header_numbers=[f"7002-add-skip11-record-from-updated-record-{i}" for i in range(10)],
+    #     header_numbers=hnums,
     # )
     # loss_stats = test_mean_below(losses)
     # times = get_final_times(
     #     filename="results-t-test.md",
-    #     header_numbers=[f"7002-add-skip11-record-from-updated-record-{i}" for i in range(10)],
+    #     header_numbers=hnums,
     # )
     # time_stats = test_mean_below(times)
 
@@ -388,12 +448,20 @@ if __name__ == "__main__":
     #     f"- Std: {time_stats['sample_std']}\n",
     # )
 
-    # SORT THE HEADER NUMBERS BY LOSS
-    hnums = [f"5001-add-normed-skip{i}-to-x-out-0" for i in range(15)]
-    losses = get_final_val_losses("results.md", hnums)
-    indices = np.argsort(losses).tolist()
-    sorted_hnums = []
-    for idx in indices:
-        sorted_hnums.append(hnums[idx])
-    print(indices)
-    print(sorted_hnums)
+    # # SORT THE HEADER NUMBERS BY LOSS
+    # hnums = [f"5001-add-normed-skip{i}-to-x-out-0" for i in range(15)]
+    # losses = get_final_val_losses("results.md", hnums)
+    # indices = np.argsort(losses).tolist()
+    # sorted_hnums = []
+    # for idx in indices:
+    #     sorted_hnums.append(hnums[idx])
+    # print(indices)
+    # print(sorted_hnums)
+
+    # MULITPLE LAMBDAS
+    results = get_val_losses_and_lambdas(
+        filename="results-multiple.md",
+        header_numbers=["8000-add-skip-multiple-7-method-btw-0"],
+    )[0]
+    import rich
+    rich.print(results)

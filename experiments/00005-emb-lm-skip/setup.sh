@@ -5,16 +5,19 @@ uv pip install numpy tqdm torch huggingface-hub matplotlib rich scipy torchinfo
 uv pip install --pre torch --index-url https://download.pytorch.org/whl/nightly/cu126 --upgrade
 uv run data/cached_fineweb10B.py
 
+cd runs
+torchrun --standalone --nproc-per-node=8 8001-add-skip-rolling.py
+
 # NEW ABLATIONS
-# 1. Try out changed seq-len schedule
+# 1. Try out changed seq-len schedule -> DONE; unsuccessful
 cd runs
 torchrun --standalone --nproc-per-node=8 7004-add-skip11-record-from-updated-record-changed-seq-len-schedule.py
 cd .. && python plot_results.py --print-final-stats --path=logs
-# 2. Try out norm-sum-norm
+# 2. Try out norm-sum-norm -> DONE; unsuccessful
 cd runs
 torchrun --standalone --nproc-per-node=8 7005-add-skip11-record-from-updated-record-norm-sum-norm.py
 cd .. && python plot_results.py --print-final-stats --path=logs
-# 3. Time old and new record
+# 3. Time old and new record -> DONE; ~8.5 seconds time reduction
 for ((i=0; i<5; i++)); do
   export RUN_ID=$i
   cd runs
@@ -24,9 +27,16 @@ for ((i=0; i<5; i++)); do
   torchrun --standalone --nproc-per-node=8 7002-add-skip11-record-from-updated-record.py
   cd .. && python plot_results.py --print-final-stats --path=logs
 done
-# 4. Ablate multiple skips
-for ((i=0; i<3; i++)); do
-  for ((j=2; i<15; i++)); do
+4. Time the record (taking previous runs into account)
+for ((i=5; i<35; i++)); do -> DONE; PR raised
+  export RUN_ID=$i
+  cd runs
+  torchrun --standalone --nproc-per-node=8 7002-add-skip11-record-from-updated-record.py
+  cd .. && python plot_results.py --print-final-stats --path=logs
+done
+# 5. Ablate multiple skips
+for ((i=1; i<3; i++)); do
+  for ((j=2; j<15; j++)); do
     export RUN_ID=$i
     cd runs
     torchrun --standalone --nproc-per-node=8 8000-add-skip-multiple.py -n=$j -c=random
