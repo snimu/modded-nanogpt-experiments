@@ -672,7 +672,7 @@ master_process = rank == 0  # this process will do logging, checkpointing etc.
 # begin logging
 if master_process:
     run_id_full = f"{run_id:03d}_{uuid.uuid4()}"
-    path = "../logs/baseline"
+    path = f"../logs/00000-extra-embs-num_ve{num_ve}-num_embs_per_ve{num_embs_per_ve}"
     os.makedirs(path, exist_ok=True)
     logfile = f"{path}/{run_id_full}.txt"
     print(logfile)
