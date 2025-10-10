@@ -539,7 +539,7 @@ class GPT(nn.Module):
         }
         skip_weights = self.scalars[: len(self.blocks)]
         lambdas = self.scalars[1 * len(self.blocks) : 4 * len(self.blocks)].view(-1, 3)
-        sa_lambdas = self.scalars[4 * len(self.blocks) : 4 + (self.num_embs_per_ve + 1) * len(self.blocks)].view(
+        sa_lambdas = self.scalars[4 * len(self.blocks) : (4 + self.num_embs_per_ve + 1) * len(self.blocks)].view(
             -1, self.num_embs_per_ve + 1
         )
         for i in range(len(self.blocks)):
