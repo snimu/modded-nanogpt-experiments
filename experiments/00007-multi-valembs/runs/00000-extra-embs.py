@@ -309,12 +309,11 @@ class CausalSelfAttention(nn.Module):
         q, k = self.rotary(q), self.rotary(k)
         v = norm(v)
         if ve is not None:
-            v = lambdas[0] * v
-            for i in range(1, len(lambdas)):
-                v = v + lambdas[i] * ve[i-1] 
-            v = lambdas[0] * v + lambdas[1] * ve.view_as(
-                v
-            )  # @KoszarskyB & @Grad62304977
+            out = lambdas[0] * v
+            for j, e in enumerate(ve):
+                e4 = e.view(1, T, self.num_heads, self.head_dim)
+                out = out + lambdas[j + 1] * e4
+            v = out  # @KoszarskyB & @Grad62304977
         else:  # skip mid-layers token value embeddings by @YouJiacheng
             v = lambdas[0] * v
         y = flex_attention(
