@@ -739,13 +739,13 @@ hidden_matrix_params = sorted(
 )
 embed_params = [
     *model.embed.parameters(),
-    *model.embed2.parameters(),  # TODO
     *model.value_embeds.parameters(),
 ]
 scalar_params = [model.scalars]
 head_params: list[nn.Parameter] = [model.lm_head_w]
+embed_modifier_params: list[nn.Parameter] = [p for p in model.embed_modifiers.parameters()]
 # sanity check
-params_collections = [hidden_matrix_params, embed_params, scalar_params, head_params]
+params_collections = [hidden_matrix_params, embed_params, scalar_params, head_params, embed_modifier_params]
 optimized_parameters_set = {p for params in params_collections for p in params}
 assert optimized_parameters_set == {*model.parameters()}
 assert len(optimized_parameters_set) == sum(len(lst) for lst in params_collections)
@@ -753,6 +753,7 @@ assert len(optimized_parameters_set) == sum(len(lst) for lst in params_collectio
 # init the optimizer(s)
 adam_param_groups = [
     dict(params=head_params, lr=1 / 320),
+    dict(params=embed_modifier_params, lr=1 / 320),
     dict(params=embed_params, lr=0.3),
     dict(params=scalar_params, lr=0.015),
 ]
