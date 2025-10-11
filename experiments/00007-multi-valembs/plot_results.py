@@ -1,9 +1,12 @@
 
+import re
 import sys
 import argparse
 import os
-from typing import Literal
+from typing import Literal, Callable, Iterable, Union
 
+import seaborn as sns
+import polars as pl
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy import stats
@@ -183,6 +186,116 @@ def get_all_final_losses_and_times(path_to_results: str) -> dict[str, dict[Liter
     return results, formatted_results
 
 
+# --- helper to parse num_ve / num_embs_per_ve from a header ---
+_num_re = re.compile(r"num_ve(\d+).*?num_embs_per_ve(\d+)")
+
+def _parse_ve_and_embs(header: str) -> tuple[int, int]:
+    m = _num_re.search(header)
+    if not m:
+        raise ValueError(f"Could not parse num_ve/num_embs_per_ve from header: {header}")
+    return int(m.group(1)), int(m.group(2))
+
+
+def plot_ve_embs_heatmap(
+    headers: Iterable[str],
+    filename: str,
+    *,
+    reducer: Union[str, Callable[[np.ndarray], float]] = "final",  # 'final' | 'min' | callable
+    annotate: bool = True,
+    fmt: str = ".3g",
+    cmap: str = "viridis",
+    title: str | None = None,
+    get_val_losses_fn=None,  # inject your existing function (or it will import from globals)
+):
+    """
+    Build a heatmap of val_loss with rows=num_ve and cols=num_embs_per_ve.
+    Uses Polars for the table and seaborn/matplotlib for plotting.
+
+    Parameters
+    ----------
+    headers : iterable of str
+        Header names present in the markdown file; each must encode num_ve & num_embs_per_ve.
+    filename : str
+        Path to the markdown log file.
+    reducer : {'final', 'min'} or callable
+        How to collapse a run's loss curve to a scalar.
+    """
+
+    # Reuse your parser
+    if get_val_losses_fn is None:
+        # assumes get_val_losses is in scope
+        get_val_losses_fn = get_val_losses
+
+    parsed, _, _ = get_val_losses_fn(list(headers), filename, average_over=None)
+
+    def _reduce_losses(losses: list[float]) -> float:
+        if not losses:  # missing data
+            return float("nan")
+        arr = np.asarray(losses, dtype=float)
+        if isinstance(reducer, str):
+            if reducer == "final":
+                return float(arr[-1])
+            elif reducer == "min":
+                return float(np.min(arr))
+            else:
+                raise ValueError("reducer must be 'final', 'min', or a callable")
+        else:
+            return float(reducer(arr))
+
+    # Build long-form rows via Polars
+    rows = []
+    for h in headers:
+        ve, embs = _parse_ve_and_embs(h)
+        value = _reduce_losses(parsed[h]["loss"])
+        rows.append({"num_ve": ve, "num_embs_per_ve": embs, "val": value})
+
+    df_long = pl.DataFrame(rows)
+
+    # Pivot to wide matrix (rows=num_ve, cols=num_embs_per_ve)
+    df_pivot = (
+        df_long
+        .pivot(values="val", index="num_ve", columns="num_embs_per_ve", aggregate_function="mean")
+        .sort("num_ve")
+    )
+
+    # Ensure columns are ordered numerically (Polars names pivot columns by their value)
+    col_nums = sorted([int(c) for c in df_pivot.columns if c != "num_ve"])
+    ordered_cols = ["num_ve"] + [str(c) for c in col_nums]
+    df_pivot = df_pivot.select(ordered_cols)
+
+    # Prepare array & labels for seaborn (no pandas used)
+    mat = df_pivot.drop("num_ve").to_numpy()
+    ytick = df_pivot["num_ve"].to_list()
+    xtick = col_nums
+
+    # Plot
+    plt.figure(figsize=(1.2 * max(4, len(xtick)), 1.0 * max(3, len(ytick))))
+    mask = np.isnan(mat)
+    ax = sns.heatmap(
+        mat,
+        annot=annotate,
+        fmt=fmt,
+        cmap=cmap,
+        cbar=True,
+        mask=mask,
+        xticklabels=xtick,
+        yticklabels=ytick,
+    )
+    ax.set_xlabel("num_embs_per_ve")
+    ax.set_ylabel("num_ve")
+
+    if title is None:
+        red_txt = reducer if isinstance(reducer, str) else getattr(reducer, "__name__", "custom")
+        title = f"Validation loss heatmap ({red_txt})"
+    ax.set_title(title)
+
+    plt.tight_layout()
+    plt.show()
+
+    # Return the Polars pivot (helpful for downstream use/tests)
+    return df_pivot
+
+
 def get_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--extract-losses", action="store_true")
@@ -207,3 +320,36 @@ if __name__ == "__main__":
         print()
     if args.extract_losses or args.print_final_stats:
         sys.exit(0)  # only perform the freeform code if nothing else is done
+
+    # # LOSS OVER NUM VE
+    # plot_val_loss(
+    #     filename="results.md",
+    #     header_numbers=[f"00000-extra-embs-num_ve{i}-num_embs_per_ve{j}-0" for i in range(1, 5) for j in range(1, 5)],
+    #     average_over={
+    #         "1 ve": [f"00000-extra-embs-num_ve1-num_embs_per_ve{j}-0" for j in range(1, 5)],
+    #         "2 ve": [f"00000-extra-embs-num_ve2-num_embs_per_ve{j}-0" for j in range(1, 5)],
+    #         "3 ve": [f"00000-extra-embs-num_ve3-num_embs_per_ve{j}-0" for j in range(1, 5)],
+    #         "4 ve": [f"00000-extra-embs-num_ve4-num_embs_per_ve{j}-0" for j in range(1, 5)],
+    #     },
+    # )
+
+    # # LOSS OVER NUM EMS PER VE
+    # plot_val_loss(
+    #     filename="results.md",
+    #     header_numbers=[f"00000-extra-embs-num_ve{i}-num_embs_per_ve{j}-0" for i in range(1, 5) for j in range(1, 5)],
+    #     average_over={
+    #         "1 emb per ve": [f"00000-extra-embs-num_ve{i}-num_embs_per_ve1-0" for i in range(1, 5)],
+    #         "2 emb per ve": [f"00000-extra-embs-num_ve{i}-num_embs_per_ve2-0" for i in range(1, 5)],
+    #         "3 emb per ve": [f"00000-extra-embs-num_ve{i}-num_embs_per_ve3-0" for i in range(1, 5)],
+    #         "4 emb per ve": [f"00000-extra-embs-num_ve{i}-num_embs_per_ve4-0" for i in range(1, 5)],
+    #     },
+    # )
+
+    headers = [f"00000-extra-embs-num_ve{i}-num_embs_per_ve{j}-0"
+           for i in range(1, 5) for j in range(1, 5)]
+
+    # Final val_loss per run
+    plot_ve_embs_heatmap(headers, filename="results.md", reducer="final")
+
+    # Or: best (minimum) val_loss across each run
+    plot_ve_embs_heatmap(headers, filename="results.md", reducer="min")
