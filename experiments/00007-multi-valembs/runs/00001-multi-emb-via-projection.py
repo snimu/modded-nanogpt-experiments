@@ -390,7 +390,7 @@ class GPT(nn.Module):
         super().__init__()
         self.embed = nn.Embedding(vocab_size, model_dim)
         self.embed_modifiers = nn.ParameterList(
-            [nn.Parameter(init_linear(torch.empty(model_dim, model_dim)).bfloat16())]
+            [nn.Parameter(init_linear(torch.empty(model_dim, model_dim)).bfloat16()) for _ in range(num_layers)]
         )
         # token value embeddings by @KoszarskyB - inspired by @Grad62304977's value residual implementation following https://arxiv.org/abs/2410.17897
         # value embedding code simplification inspired by @ragulpr https://github.com/KellerJordan/modded-nanogpt/pull/78
