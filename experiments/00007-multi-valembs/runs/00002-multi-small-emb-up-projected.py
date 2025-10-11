@@ -758,7 +758,7 @@ embed_params = [
 ]
 scalar_params = [model.scalars]
 head_params: list[nn.Parameter] = [model.lm_head_w]
-decompressor_params = [p for p in model.decompressor]
+decompressor_params = [model.decompressor]
 # sanity check
 params_collections = [hidden_matrix_params, embed_params, scalar_params, head_params, decompressor_params]
 optimized_parameters_set = {p for params in params_collections for p in params}
