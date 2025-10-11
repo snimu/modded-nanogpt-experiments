@@ -49,8 +49,6 @@ step:5375/5550 val_loss:2.941800 train_time:1307313ms step_avg:243.22ms lx:0.768
 step:5500/5550 val_loss:2.936851 train_time:1339510ms step_avg:243.55ms lx:0.772 ls:-0.246
 step:5550/5550 val_loss:2.935540 train_time:1352463ms step_avg:243.69ms lx:0.773 ls:-0.246
 
-
-
 ## 00000-extra-embs-num_ve1-num_embs_per_ve2-0
 
 step:0/5550 val_loss:10.825840 train_time:0ms step_avg:0.12ms lx:1.000 ls:0.000
@@ -99,8 +97,6 @@ step:5250/5550 val_loss:2.946521 train_time:1280439ms step_avg:243.89ms lx:0.728
 step:5375/5550 val_loss:2.939636 train_time:1312492ms step_avg:244.18ms lx:0.736 ls:-0.149
 step:5500/5550 val_loss:2.934542 train_time:1344808ms step_avg:244.51ms lx:0.742 ls:-0.150
 step:5550/5550 val_loss:2.933294 train_time:1357812ms step_avg:244.65ms lx:0.743 ls:-0.150
-
-
 
 ## 00000-extra-embs-num_ve1-num_embs_per_ve3-0
 
@@ -151,8 +147,6 @@ step:5375/5550 val_loss:2.941101 train_time:1319750ms step_avg:245.53ms lx:0.739
 step:5500/5550 val_loss:2.936071 train_time:1352207ms step_avg:245.86ms lx:0.745 ls:-0.164
 step:5550/5550 val_loss:2.934779 train_time:1365264ms step_avg:245.99ms lx:0.746 ls:-0.165
 
-
-
 ## 00000-extra-embs-num_ve1-num_embs_per_ve4-0
 
 step:0/5550 val_loss:10.825840 train_time:0ms step_avg:0.09ms lx:1.000 ls:0.000
@@ -201,8 +195,6 @@ step:5250/5550 val_loss:2.948420 train_time:1292654ms step_avg:246.22ms lx:0.700
 step:5375/5550 val_loss:2.941652 train_time:1325001ms step_avg:246.51ms lx:0.707 ls:-0.152
 step:5500/5550 val_loss:2.936629 train_time:1357583ms step_avg:246.83ms lx:0.712 ls:-0.152
 step:5550/5550 val_loss:2.935356 train_time:1370688ms step_avg:246.97ms lx:0.714 ls:-0.152
-
-
 
 ## 00000-extra-embs-num_ve1-num_embs_per_ve5-0
 
@@ -253,8 +245,6 @@ step:5375/5550 val_loss:2.940967 train_time:1332611ms step_avg:247.93ms lx:0.740
 step:5500/5550 val_loss:2.935923 train_time:1365399ms step_avg:248.25ms lx:0.746 ls:-0.170
 step:5550/5550 val_loss:2.934630 train_time:1378589ms step_avg:248.39ms lx:0.747 ls:-0.171
 
-
-
 ## 00000-extra-embs-num_ve2-num_embs_per_ve1-0
 
 step:0/5550 val_loss:10.825840 train_time:0ms step_avg:0.37ms lx:1.000 ls:0.000
@@ -303,8 +293,6 @@ step:5250/5550 val_loss:2.938362 train_time:1282459ms step_avg:244.28ms lx:0.772
 step:5375/5550 val_loss:2.931800 train_time:1314614ms step_avg:244.58ms lx:0.778 ls:-0.256
 step:5500/5550 val_loss:2.926786 train_time:1346965ms step_avg:244.90ms lx:0.783 ls:-0.256
 step:5550/5550 val_loss:2.925557 train_time:1359970ms step_avg:245.04ms lx:0.784 ls:-0.256
-
-
 
 ## 00000-extra-embs-num_ve2-num_embs_per_ve2-0
 
@@ -355,8 +343,6 @@ step:5375/5550 val_loss:2.932546 train_time:1354341ms step_avg:251.97ms lx:0.768
 step:5500/5550 val_loss:2.927562 train_time:1387352ms step_avg:252.25ms lx:0.772 ls:-0.282
 step:5550/5550 val_loss:2.926322 train_time:1400650ms step_avg:252.37ms lx:0.774 ls:-0.282
 
-
-
 ## 00000-extra-embs-num_ve2-num_embs_per_ve3-0
 
 step:0/5550 val_loss:10.825840 train_time:0ms step_avg:0.13ms lx:1.000 ls:0.000
@@ -405,8 +391,6 @@ step:5250/5550 val_loss:2.936497 train_time:1306063ms step_avg:248.77ms lx:0.775
 step:5375/5550 val_loss:2.929881 train_time:1338748ms step_avg:249.07ms lx:0.781 ls:-0.287
 step:5500/5550 val_loss:2.924965 train_time:1371672ms step_avg:249.39ms lx:0.785 ls:-0.287
 step:5550/5550 val_loss:2.923756 train_time:1384941ms step_avg:249.54ms lx:0.786 ls:-0.287
-
-
 
 ## 00000-extra-embs-num_ve2-num_embs_per_ve4-0
 
@@ -457,8 +441,6 @@ step:5375/5550 val_loss:2.929585 train_time:1351351ms step_avg:251.41ms lx:0.772
 step:5500/5550 val_loss:2.924676 train_time:1384547ms step_avg:251.74ms lx:0.777 ls:-0.230
 step:5550/5550 val_loss:2.923437 train_time:1397895ms step_avg:251.87ms lx:0.778 ls:-0.231
 
-
-
 ## 00000-extra-embs-num_ve2-num_embs_per_ve5-0
 
 step:0/5550 val_loss:10.825840 train_time:0ms step_avg:0.40ms lx:1.000 ls:0.000
@@ -507,8 +489,6 @@ step:5250/5550 val_loss:2.936977 train_time:1331676ms step_avg:253.65ms lx:0.766
 step:5375/5550 val_loss:2.930300 train_time:1364943ms step_avg:253.94ms lx:0.772 ls:-0.245
 step:5500/5550 val_loss:2.925447 train_time:1398437ms step_avg:254.26ms lx:0.777 ls:-0.246
 step:5550/5550 val_loss:2.924234 train_time:1411919ms step_avg:254.40ms lx:0.778 ls:-0.246
-
-
 
 ## 00000-extra-embs-num_ve3-num_embs_per_ve1-0
 
@@ -559,8 +539,6 @@ step:5375/5550 val_loss:2.926477 train_time:1321270ms step_avg:245.82ms lx:0.823
 step:5500/5550 val_loss:2.921571 train_time:1353767ms step_avg:246.14ms lx:0.826 ls:-0.368
 step:5550/5550 val_loss:2.920380 train_time:1366837ms step_avg:246.28ms lx:0.827 ls:-0.368
 
-
-
 ## 00000-extra-embs-num_ve3-num_embs_per_ve2-0
 
 step:0/5550 val_loss:10.825840 train_time:0ms step_avg:0.08ms lx:1.000 ls:0.000
@@ -609,8 +587,6 @@ step:5250/5550 val_loss:2.930534 train_time:1314685ms step_avg:250.42ms lx:0.791
 step:5375/5550 val_loss:2.923953 train_time:1347505ms step_avg:250.70ms lx:0.797 ls:-0.309
 step:5500/5550 val_loss:2.919070 train_time:1380540ms step_avg:251.01ms lx:0.802 ls:-0.309
 step:5550/5550 val_loss:2.917896 train_time:1393827ms step_avg:251.14ms lx:0.803 ls:-0.309
-
-
 
 ## 00000-extra-embs-num_ve3-num_embs_per_ve3-0
 
@@ -661,8 +637,6 @@ step:5375/5550 val_loss:2.922941 train_time:1360050ms step_avg:253.03ms lx:0.804
 step:5500/5550 val_loss:2.918033 train_time:1393438ms step_avg:253.35ms lx:0.808 ls:-0.301
 step:5550/5550 val_loss:2.916837 train_time:1406864ms step_avg:253.49ms lx:0.809 ls:-0.301
 
-
-
 ## 00000-extra-embs-num_ve3-num_embs_per_ve4-0
 
 step:0/5550 val_loss:10.825840 train_time:0ms step_avg:0.09ms lx:1.000 ls:0.000
@@ -711,8 +685,6 @@ step:5250/5550 val_loss:2.930364 train_time:1345366ms step_avg:256.26ms lx:0.805
 step:5375/5550 val_loss:2.923842 train_time:1378966ms step_avg:256.55ms lx:0.811 ls:-0.341
 step:5500/5550 val_loss:2.918962 train_time:1412787ms step_avg:256.87ms lx:0.815 ls:-0.342
 step:5550/5550 val_loss:2.917716 train_time:1426389ms step_avg:257.01ms lx:0.815 ls:-0.342
-
-
 
 ## 00000-extra-embs-num_ve3-num_embs_per_ve5-0
 
@@ -763,8 +735,6 @@ step:5375/5550 val_loss:2.923798 train_time:1398570ms step_avg:260.20ms lx:0.822
 step:5500/5550 val_loss:2.918926 train_time:1432843ms step_avg:260.52ms lx:0.826 ls:-0.373
 step:5550/5550 val_loss:2.917727 train_time:1446644ms step_avg:260.66ms lx:0.827 ls:-0.373
 
-
-
 ## 00000-extra-embs-num_ve4-num_embs_per_ve1-0
 
 step:0/5550 val_loss:10.825840 train_time:0ms step_avg:0.18ms lx:1.000 ls:0.000
@@ -813,8 +783,6 @@ step:5250/5550 val_loss:2.931199 train_time:1302987ms step_avg:248.19ms lx:0.852
 step:5375/5550 val_loss:2.924742 train_time:1335545ms step_avg:248.47ms lx:0.857 ls:-0.436
 step:5500/5550 val_loss:2.919848 train_time:1368310ms step_avg:248.78ms lx:0.861 ls:-0.436
 step:5550/5550 val_loss:2.918660 train_time:1381489ms step_avg:248.92ms lx:0.862 ls:-0.437
-
-
 
 ## 00000-extra-embs-num_ve4-num_embs_per_ve2-0
 
@@ -865,8 +833,6 @@ step:5375/5550 val_loss:2.922667 train_time:1354069ms step_avg:251.92ms lx:0.837
 step:5500/5550 val_loss:2.917737 train_time:1387306ms step_avg:252.24ms lx:0.841 ls:-0.390
 step:5550/5550 val_loss:2.916562 train_time:1400674ms step_avg:252.37ms lx:0.842 ls:-0.390
 
-
-
 ## 00000-extra-embs-num_ve4-num_embs_per_ve3-0
 
 step:0/5550 val_loss:10.825840 train_time:0ms step_avg:0.22ms lx:1.000 ls:0.000
@@ -915,8 +881,6 @@ step:5250/5550 val_loss:2.926899 train_time:1347424ms step_avg:256.65ms lx:0.841
 step:5375/5550 val_loss:2.920412 train_time:1381067ms step_avg:256.94ms lx:0.846 ls:-0.398
 step:5500/5550 val_loss:2.915622 train_time:1414959ms step_avg:257.27ms lx:0.850 ls:-0.398
 step:5550/5550 val_loss:2.914442 train_time:1428592ms step_avg:257.40ms lx:0.851 ls:-0.399
-
-
 
 ## 00000-extra-embs-num_ve4-num_embs_per_ve4-0
 
