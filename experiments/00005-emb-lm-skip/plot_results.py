@@ -120,6 +120,7 @@ def plot_val_loss(
         x_axis: str = "step",
         average_over: dict[str, tuple[str, int]] | None = None,
         legend: bool = True,
+        title: str | None = None,
 ):
     parsed, header_numbers, descriptions = get_val_losses(header_numbers, filename, average_over)
 
@@ -130,6 +131,8 @@ def plot_val_loss(
     plt.ylabel("val_loss")
     if legend:
         plt.legend()
+    if title:
+        plt.title(title)
     plt.grid()
     plt.show()
 
@@ -315,6 +318,162 @@ def plot_final_losses_over_names_by_method(
     plt.show()
 
 
+def extract_lambdas_and_layers_for_results_multiple(
+        filename: str,
+        header_numbers: list[int | str],
+) -> dict[str, dict[Literal["lambdas", "layers"], list[float] | list[int]]]:
+    with open(filename, "r") as f:
+        lines = f.readlines()
+
+    if isinstance(header_numbers, dict):
+        header_numbers = list(header_numbers.keys())
+
+    results = {}
+    for hnum in header_numbers:
+        extract= False
+        for line in lines:
+            if line.strip() == f"## {hnum}":
+                extract = True
+                continue
+            if extract and line.startswith("##"):
+                break
+            if extract and line.startswith("step:") and "val_loss" in line:
+                line = line.split("lambdas: ")[1]
+                split = line.split(" skip-layers: ")
+                lambdas = ast.literal_eval(split[0].strip())
+                layers = ast.literal_eval(split[1].strip())
+                results[hnum] = dict(lambdas=lambdas, layers=layers)
+
+    return results
+
+
+def get_losses_and_times_sorted_by_category(
+        filename: str,
+        header_numbers: list[int | str] | Literal["all"],
+        by: Literal["distance_between_layers", "sorting_method", "num_layers"],
+) -> dict[str | int, list[str]]:
+    if header_numbers == "all":
+        with open(filename, "r") as f:
+            lines = f.readlines()
+        hnums = []
+        for line in lines:
+            if line.strip().startswith("##"):
+                hnums.append(line.replace("##", "").strip())
+        header_numbers = hnums
+    data = extract_lambdas_and_layers_for_results_multiple(
+        filename=filename,
+        header_numbers=header_numbers,
+    )
+    if by == "distance_between_layers":
+        times = get_final_times(filename, header_numbers)
+        losses = get_final_val_losses(filename, header_numbers)
+        mean_dists = []
+        for hnum in header_numbers:
+            layers = sorted(data[hnum]["layers"])
+            dists = [l2 - l1 for l1, l2 in zip(layers[:-1], layers[1:])]
+            mean_dists.append(sum(dists) / len(dists))
+        dist_to_data = {
+            d: dict(time=times[i], loss=losses[i], hnum=[header_numbers[i]])
+            for i, d in enumerate(mean_dists)
+        }
+        return {d: dist_to_data[d] for d in sorted(mean_dists)}  # sort the dict
+    elif by == "sorting_method":
+        assert all(isinstance(hnum, str) for hnum in header_numbers)
+        methods = {hnum.split("method")[1].split("-")[1] for hnum in header_numbers}
+        results = {}
+        for method in methods:
+            hnums = [hnum for hnum in header_numbers if method in hnum]
+            times = get_final_times(filename, hnums)
+            losses = get_final_val_losses(filename, hnums)
+            results[method] = dict(
+                time=sum(times) / len(times),
+                loss=sum(losses) / len(losses),
+                hnums=hnums,
+            )
+        return results
+    elif by == "num_layers":
+        results = {}
+        nums = [int(hnum.split("multiple-")[1].split("-")[0]) for hnum in header_numbers]
+        for num in nums:
+            hnums = [hnum for hnum in header_numbers if f"-{num}-" in hnum]
+            times = get_final_times(filename, hnums)
+            losses = get_final_val_losses(filename, hnums)
+            results[num] = dict(
+                time=sum(times)/len(times),
+                loss=sum(losses)/len(losses),
+                hnums=hnums,
+            )
+        return results
+    raise ValueError(
+        f"{by=} is not a valid value; "
+        "must be 'distance_between_layers' or 'sorting_method'"
+    )
+
+
+def plot_final_val_loss_by_category(
+        filename: str,
+        header_numbers: list[int | str] | Literal["all"],
+        by: Literal["distance_between_layers", "sorting_method", "num_layers"],
+        do_print: bool = False,
+):
+    results = get_losses_and_times_sorted_by_category(
+        filename=filename,
+        header_numbers=header_numbers,
+        by=by,
+    )
+
+    if do_print:
+        import rich
+        print(f"BY {by.upper()}:")
+        rich.print(results)
+
+    x = sorted(list(results.keys()))
+    y = [results[dpt]["loss"] for dpt in x]
+    if by == "sorting_method":
+        plt.bar(x, y)
+    else:
+        plt.plot(x, y)
+    plt.xlabel("dist")
+    plt.ylabel("Final val loss")
+    plt.grid()
+    if by == "sorting_method":
+        plt.ylim(2.918, 2.9205)
+    elif by == "num_layers":
+        plt.ylim(2.9185, 2.92)
+    plt.show()
+
+
+def plot_loss_by_sorting_method_over_num_layers():
+    by_meth = get_losses_and_times_sorted_by_category(
+        filename="results-multiple.md",
+        header_numbers="all",
+        by="sorting_method",
+    )
+    for method in ["btw", "wtb", "htl", "lth", "random"]:
+        results = by_meth[method]
+        by_layer = get_losses_and_times_sorted_by_category(
+            filename="results-multiple.md",
+            header_numbers=results["hnums"],
+            by="num_layers",
+        )
+        x = sorted(list(by_layer.keys()))
+        y = [by_layer[layer]["loss"] for layer in x]
+        label = {
+            "btw": "Best to Worst",
+            "wtb": "Worst to Best",
+            "htl": "Late to Early",
+            "lth": "Early to Late",
+            "random": "Random",
+        }[method]
+        plt.plot(x, y, label=label)
+    
+    plt.grid()
+    plt.legend()
+    plt.xlabel("Number of Layers skipped to Output")
+    plt.ylabel("Final validation loss")
+    plt.show()
+
+
 def get_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--extract-losses", action="store_true")
@@ -458,10 +617,47 @@ if __name__ == "__main__":
     # print(indices)
     # print(sorted_hnums)
 
-    # MULITPLE LAMBDAS
-    results = get_val_losses_and_lambdas(
-        filename="results-multiple.md",
-        header_numbers=["8000-add-skip-multiple-7-method-btw-0"],
-    )[0]
-    import rich
-    rich.print(results)
+    # # MULITPLE LAMBDAS
+    # results = get_val_losses_and_lambdas(
+    #     filename="results-multiple.md",
+    #     header_numbers=["8000-add-skip-multiple-7-method-btw-0"],
+    # )[0]
+    # import rich
+    # rich.print(results)
+
+    # # FINAL LOSS BY CATEGORY
+    # plot_final_val_loss_by_category(
+    #     filename="results-multiple.md",
+    #     header_numbers="all",
+    #     by="distance_between_layers",
+    # )
+    # plot_final_val_loss_by_category(
+    #     filename="results-multiple.md",
+    #     header_numbers="all",
+    #     by="sorting_method",
+    # )
+    # plot_final_val_loss_by_category(
+    #     filename="results-multiple.md",
+    #     header_numbers="all",
+    #     by="num_layers",
+    # )
+
+    # # VAL LOSSES
+    # for num_skips in range(2, 15):
+    #     plot_val_loss(
+    #         filename="results-multiple.md",
+    #         header_numbers=[
+    #             f"8000-add-skip-multiple-{num_skips}-method-{method}-0"
+    #             for method in ["btw", "wtb", "htl", "lth", "random"]
+    #         ],
+    #         average_over={
+    #             "Best to Worst": [f"8000-add-skip-multiple-{num_skips}-method-btw-0"],
+    #             "Worst to Best": [f"8000-add-skip-multiple-{num_skips}-method-wtb-0"],
+    #             "Late to Early": [f"8000-add-skip-multiple-{num_skips}-method-htl-0"],
+    #             "Early to Late": [f"8000-add-skip-multiple-{num_skips}-method-lth-0"],
+    #             "Random": [f"8000-add-skip-multiple-{num_skips}-method-random-0"],
+    #         },
+    #         title=f"{num_skips} Layers skipped to Output",
+    #     )
+
+    plot_loss_by_sorting_method_over_num_layers()
