@@ -653,7 +653,7 @@ master_process = rank == 0  # this process will do logging, checkpointing etc.
 # begin logging
 if master_process:
     run_id_full = f"{run_id:03d}_{uuid.uuid4()}"
-    path = "../logs/7007-add-skip11-record-from-updated-record-fixed-alpha"
+    path = "../logs/7008-add-skip11-record-from-updated-record-fixed-lambdas"
     os.makedirs(path, exist_ok=True)
     logfile = f"{path}/{run_id_full}.txt"
     print(logfile)
