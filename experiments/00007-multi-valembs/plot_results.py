@@ -63,6 +63,7 @@ def plot_val_loss(
         filename: str,
         x_axis: str = "step",
         average_over: dict[str, tuple[str, int]] | None = None,
+        title: str | None = None
 ):
     parsed, header_numbers, descriptions = get_val_losses(header_numbers, filename, average_over)
 
@@ -71,6 +72,8 @@ def plot_val_loss(
         plt.plot(parsed[hnum][x_axis], parsed[hnum]["loss"], label=f"{hnum}{description}")
     plt.xlabel("step" if x_axis == "step" else "time (s)")
     plt.ylabel("val_loss")
+    if title:
+        plt.title(title)
     plt.legend()
     plt.grid()
     plt.show()
@@ -343,13 +346,35 @@ if __name__ == "__main__":
     #         "3 emb per ve": [f"00000-extra-embs-num_ve{i}-num_embs_per_ve3-0" for i in range(1, 5)],
     #         "4 emb per ve": [f"00000-extra-embs-num_ve{i}-num_embs_per_ve4-0" for i in range(1, 5)],
     #     },
+    #     x_axis="time",
     # )
 
-    headers = [f"00000-extra-embs-num_ve{i}-num_embs_per_ve{j}-0"
-           for i in range(1, 5) for j in range(1, 5)]
+    # # HEATMAP OF FINAL / BEST VAL LOSS OVER NUM VE AND NUM EMB PER VE
+    # headers = [f"00000-extra-embs-num_ve{i}-num_embs_per_ve{j}-0"
+    #        for i in range(1, 5) for j in range(1, 5)]
 
-    # Final val_loss per run
-    plot_ve_embs_heatmap(headers, filename="results.md", reducer="final")
+    # # Final val_loss per run
+    # plot_ve_embs_heatmap(headers, filename="results.md", reducer="final")
 
-    # Or: best (minimum) val_loss across each run
-    plot_ve_embs_heatmap(headers, filename="results.md", reducer="min")
+    # # Or: best (minimum) val_loss across each run
+    # plot_ve_embs_heatmap(headers, filename="results.md", reducer="min")
+
+    # # VAL LOSSES NUM_VE=4
+    # plot_val_loss(
+    #     filename="results.md",
+    #     header_numbers=[f"00000-extra-embs-num_ve4-num_embs_per_ve{j}-0" for j in range(1, 5)],
+    #     x_axis="time",
+    # )
+
+    # VAL LOSSES ALL RUNS
+    for num_ve in range(1, 5):
+        plot_val_loss(
+            filename="results.md",
+            header_numbers=[f"00000-extra-embs-num_ve{num_ve}-num_embs_per_ve{j}-0" for j in range(1, 5)],
+            average_over={
+                f"# Embeddings per ve Layer: {j}": [f"00000-extra-embs-num_ve{num_ve}-num_embs_per_ve{j}-0"]
+                for j in range(1, 5)
+            },
+            x_axis="time",
+            title=f"{num_ve} Value Embedding Layer" + ("s" if num_ve > 1 else ""),
+        )

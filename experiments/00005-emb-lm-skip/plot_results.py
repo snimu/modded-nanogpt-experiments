@@ -1,8 +1,10 @@
 
+import math
 import ast
 import sys
 import argparse
 import os
+from collections import defaultdict
 from typing import Literal
 
 import matplotlib.pyplot as plt
@@ -112,6 +114,91 @@ def get_val_losses_and_lambdas(
             }
         parsed = new_parsed
     return parsed, header_numbers, descriptions
+
+
+def get_val_losses_and_lambdas_record(
+        header_numbers: list[int | str] | dict[int | str, str],
+        filename: str,
+        average_over: dict[str, tuple[str, int]] | None = None,
+):
+    with open(filename, "r") as f:
+        lines = f.readlines()
+
+    if isinstance(header_numbers, dict):
+        descriptions = list(header_numbers.values())
+        header_numbers = list(header_numbers.keys())
+    else:
+        descriptions = ["" for _ in header_numbers]
+
+    parsed = {hnum: {"step": [], "time": [], "loss": [], "x-lambda": [], "lambdas": []} for hnum in header_numbers}
+    for hnum in header_numbers:
+        extract= False
+        for line in lines:
+            if line.strip() == f"## {hnum}":
+                extract = True
+                continue
+            if extract and line.startswith("##"):
+                break
+            if extract and line.startswith("step:") and "val_loss" in line:
+                parsed[hnum]["loss"].append(float(line.split()[1].split("val_loss:")[-1]))
+                parsed[hnum]["step"].append(int(line.split("step:")[1].split("/")[0]))
+                parsed[hnum]["time"].append(float(line.split("train_time:")[1].split("ms")[0]) / 1000)
+                parsed[hnum]["x-lambda"].append(float(line.split("lx:")[1].split("ls")[0].strip()))
+                parsed[hnum]["lambdas"].append(ast.literal_eval(line.split("ls:")[1].strip()))
+    
+    if average_over is not None:
+        header_numbers = list(average_over.keys())
+        descriptions = ["" for _ in header_numbers]
+        new_parsed = {}
+        for hnum in average_over:
+            group = average_over[hnum]
+            steps = parsed[group[0]]["step"]
+            times = np.array([parsed[header]["time"] for header in group])
+            losses = np.array([parsed[header]["loss"] for header in group])
+            x_lambdas = np.array([parsed[header]["x-lambda"] for header in group])
+            lambdas = np.array([parsed[header]["lambdas"] for header in group])
+            new_parsed[hnum] = {
+                "loss": np.mean(losses, axis=0).tolist(),
+                "step": steps,
+                "time": np.mean(times, axis=0).tolist(),
+                "x-lambda": np.mean(x_lambdas, axis=0).tolist(),
+                "lambdas": np.mean(lambdas, axis=0).tolist(),
+                "all-times": [parsed[header]["time"] for header in group],
+                "all-losses": [parsed[header]["loss"] for header in group],
+                "all-x-lambdas": [parsed[header]["x-lambda"] for header in group],
+                "all-lambdas": [parsed[header]["lambdas"] for header in group],
+            }
+        parsed = new_parsed
+    return parsed, header_numbers, descriptions
+
+
+def plot_lambdas_record(
+        header_numbers: list[int | str] | dict[int | str, str],
+        filename: str,
+        plot_all: bool = False,
+        x_axis: Literal["step", "time"] = "step",
+):
+    parsed, _, _ = get_val_losses_and_lambdas_record(
+        filename=filename,
+        header_numbers=header_numbers,
+        average_over={"all": header_numbers},
+    )
+    parsed = parsed["all"]  # artifact of averaging
+    colors = plt.get_cmap("tab10").colors
+    plt.plot(parsed[x_axis], parsed["x-lambda"], color=colors[0], marker="^", label="x-lambda", lw=2)
+    if plot_all:
+        for x_lambdas in parsed["all-x-lambdas"]:
+            plt.plot(parsed[x_axis], x_lambdas, color=colors[0], alpha=0.3)
+    
+    plt.plot(parsed[x_axis], parsed["lambdas"], color=colors[1], marker="o", label="skip-lambda", lw=2)
+    if plot_all:
+        for lambdas in parsed["all-lambdas"]:
+            plt.plot(parsed[x_axis], lambdas, color=colors[1], alpha=0.3)
+    plt.grid()
+    plt.legend()
+    plt.xlabel("Training Step" if x_axis == "step" else "Training Time")
+    plt.ylabel("Lambda Value")
+    plt.show()
 
 
 def plot_val_loss(
@@ -347,18 +434,143 @@ def extract_lambdas_and_layers_for_results_multiple(
     return results
 
 
+def plot_lambdas_over_layer_multiple(
+        filename: str,
+        header_numbers: list[int | str],
+        max_layers: int = 15,
+):
+    results = extract_lambdas_and_layers_for_results_multiple(filename, header_numbers)
+
+    # Gather lambdas per layer
+    layer_to_lambda: dict[int, list[float]] = defaultdict(list)
+    for info in results.values():
+        for lam, layer in zip(info["lambdas"], info["layers"]):
+            layer_to_lambda[int(layer)].append(float(lam))
+
+    # Keep only layers that have any data
+    if not layer_to_lambda:
+        raise ValueError("No lambda data found for the given inputs.")
+
+    x = sorted(k for k in layer_to_lambda.keys() if 0 <= k < max_layers)
+    data = [layer_to_lambda[layer] for layer in x]
+
+    # Plot
+    fig, ax = plt.subplots(figsize=(8, 4.5))
+
+    # Violin plot at exact layer positions
+    parts = ax.violinplot(
+        data,
+        positions=x,
+        showmeans=True,
+        showmedians=True,
+        showextrema=True,
+        widths=0.8
+    )
+    # Make violins slightly transparent
+    for body in parts['bodies']:
+        body.set_alpha(0.6)
+
+    # Scatter raw points with small horizontal jitter so density is visible
+    for xi, ys in zip(x, data):
+        jitter = (np.random.rand(len(ys)) - 0.5) * 0.6  # +/- 0.3 jitter
+        ax.scatter(np.full(len(ys), xi) + jitter, ys, s=12, alpha=0.6)
+
+    ax.set_xlabel("Layer")
+    ax.set_ylabel("Lambda")
+    ax.set_xticks(x)
+    ax.grid(axis="y", linestyle="--", alpha=0.4)
+    fig.tight_layout()
+    plt.show()
+
+
+def get_first_step_and_time_below_target_loss(
+        filename: str,
+        header_number: str | int,
+) -> tuple[int, float]:
+    parsed, _, _ = get_val_losses(filename=filename, header_numbers=[header_number])
+    parsed = parsed[header_number]
+    is_below = [loss < 2.92 for loss in parsed["loss"]]
+    
+    try:
+        idx_first_below = is_below.index(True)
+    except ValueError:
+        return -1, -1.0
+
+    if idx_first_below == 0:
+        return 0, 0.0
+    
+    idx0 = idx_first_below - 1
+    idx1 = idx_first_below
+    loss0 = parsed["loss"][idx0]
+    loss1 = parsed["loss"][idx1]
+
+    step0 = parsed["step"][idx0]
+    step1 = parsed["step"][idx1]
+    time0 = parsed["time"][idx0]
+    time1 = parsed["time"][idx1]
+    threshold = 2.92
+
+    delta_loss = loss1 - loss0
+    if delta_loss == 0:
+        return step1, time1
+
+    fraction = (threshold - loss0) / delta_loss
+    fraction = min(max(fraction, 0.0), 1.0)
+    interpolated_step = step0 + fraction * (step1 - step0)
+    interpolated_time = time0 + fraction * (time1 - time0)
+
+    return math.ceil(round(interpolated_step)), interpolated_time
+
+
+def get_hnum_crossing_target_loss_sorted_by_time():
+    results = {
+        hnum: get_first_step_and_time_below_target_loss("results-multiple.md", hnum)
+        for hnum in [
+            f"8000-add-skip-multiple-{num_skips}-method-{method}-0"
+            for method in ["btw", "wtb", "htl", "lth", "random"]
+            for num_skips in range(2, 15)
+        ]
+    }
+    results = {k: v for k, v in results.items() if v[0] >= 0 and v[1] >= 0.0}
+    sorted_hnums = sorted(
+        list(results.keys()),
+        key=lambda hnum: results[hnum][1]  # sort by time
+    )
+    sorted_info = []
+    for hnum in sorted_hnums:
+        method = f"{hnum.split('-method-')[1].split('-')[0]}"
+        num_layers = int(f"{hnum.split('multiple-')[1].split('-method')[0]}")
+        sorted_info.append(
+            dict(
+                num_layers=num_layers,
+                method={
+                    "btw": "Best to Worst",
+                    "wtb": "Worst to Best",
+                    "htl": "Late to Early",
+                    "lth": "Early to Late",
+                    "random": "Random",
+                }[method],
+                time=round(results[hnum][1], 4),
+                step=results[hnum][0],
+            )
+        )
+    return sorted_info
+
+
 def get_losses_and_times_sorted_by_category(
         filename: str,
-        header_numbers: list[int | str] | Literal["all"],
-        by: Literal["distance_between_layers", "sorting_method", "num_layers"],
+        header_numbers: list[int | str] | Literal["all", "htl", "lth", "btw", "wtb", "random"],
+        by: Literal["distance_between_layers", "sorting_method", "num_layers", "distance_from_output"],
 ) -> dict[str | int, list[str]]:
-    if header_numbers == "all":
+    if isinstance(header_numbers, str):
         with open(filename, "r") as f:
             lines = f.readlines()
         hnums = []
         for line in lines:
             if line.strip().startswith("##"):
                 hnums.append(line.replace("##", "").strip())
+        if header_numbers != "all":
+            hnums = [hnum for hnum in hnums if header_numbers in hnum]
         header_numbers = hnums
     data = extract_lambdas_and_layers_for_results_multiple(
         filename=filename,
@@ -404,6 +616,19 @@ def get_losses_and_times_sorted_by_category(
                 hnums=hnums,
             )
         return results
+    elif by == "distance_from_output":
+        times = get_final_times(filename, header_numbers)
+        losses = get_final_val_losses(filename, header_numbers)
+        mean_dists = []
+        for hnum in header_numbers:
+            layers = sorted(data[hnum]["layers"])
+            dists = [15 - layer for layer in layers]
+            mean_dists.append(sum(dists) / len(dists))
+        dist_to_data = {
+            d: dict(time=times[i], loss=losses[i], hnum=[header_numbers[i]])
+            for i, d in enumerate(mean_dists)
+        }
+        return {d: dist_to_data[d] for d in sorted(mean_dists)}  # sort the dict
     raise ValueError(
         f"{by=} is not a valid value; "
         "must be 'distance_between_layers' or 'sorting_method'"
@@ -412,8 +637,8 @@ def get_losses_and_times_sorted_by_category(
 
 def plot_final_val_loss_by_category(
         filename: str,
-        header_numbers: list[int | str] | Literal["all"],
-        by: Literal["distance_between_layers", "sorting_method", "num_layers"],
+        header_numbers: list[int | str] | Literal["all", "htl", "lth", "btw", "wtb", "random"],
+        by: Literal["distance_between_layers", "sorting_method", "num_layers", "distance_from_output"],
         do_print: bool = False,
 ):
     results = get_losses_and_times_sorted_by_category(
@@ -427,29 +652,56 @@ def plot_final_val_loss_by_category(
         print(f"BY {by.upper()}:")
         rich.print(results)
 
-    x = sorted(list(results.keys()))
-    y = [results[dpt]["loss"] for dpt in x]
+    if by == "sorting_method":
+        keys = sorted(list(results.keys()), key=lambda x: ["htl", "lth", "btw", "wtb", "random"].index(x))
+    else:
+        keys = sorted(list(results.keys()))
+    if by == "sorting_method":
+        x = [
+            {
+                "btw": "Best to Worst",
+                "wtb": "Worst to Best",
+                "htl": "Late to Early",
+                "lth": "Early to Late",
+                "random": "Random",
+            }[key]
+            for key in keys
+        ]
+    else:
+        x = keys
+    y = [results[dpt]["loss"] for dpt in keys]
     if by == "sorting_method":
         plt.bar(x, y)
     else:
         plt.plot(x, y)
-    plt.xlabel("dist")
+    plt.xlabel(by.replace("_", " ").capitalize())
     plt.ylabel("Final val loss")
     plt.grid()
-    if by == "sorting_method":
+    if header_numbers == "all" and by == "sorting_method":
         plt.ylim(2.918, 2.9205)
-    elif by == "num_layers":
+    elif header_numbers == "all" and by == "num_layers":
         plt.ylim(2.9185, 2.92)
     plt.show()
 
 
-def plot_loss_by_sorting_method_over_num_layers():
+def plot_loss_by_sorting_method_over_num_layers(
+        methods: list[Literal["btw", "wtb", "htl", "lth", "random", "all"]] = "all",
+        take_average: bool = False,
+):
+    if methods == "all" or methods == ["all"]:
+        methods = ["btw", "wtb", "htl", "lth", "random"]
+    else:
+        methods = list(set(methods))
+    assert all(method in ["btw", "wtb", "htl", "lth", "random"] for method in methods), f"{methods=}"
     by_meth = get_losses_and_times_sorted_by_category(
         filename="results-multiple.md",
         header_numbers="all",
         by="sorting_method",
     )
-    for method in ["btw", "wtb", "htl", "lth", "random"]:
+    if take_average:
+        layer_sums: defaultdict[int, float] = defaultdict(float)
+        layer_counts: defaultdict[int, int] = defaultdict(int)
+    for method in methods:
         results = by_meth[method]
         by_layer = get_losses_and_times_sorted_by_category(
             filename="results-multiple.md",
@@ -458,14 +710,23 @@ def plot_loss_by_sorting_method_over_num_layers():
         )
         x = sorted(list(by_layer.keys()))
         y = [by_layer[layer]["loss"] for layer in x]
-        label = {
-            "btw": "Best to Worst",
-            "wtb": "Worst to Best",
-            "htl": "Late to Early",
-            "lth": "Early to Late",
-            "random": "Random",
-        }[method]
-        plt.plot(x, y, label=label)
+        if take_average:
+            for layer, loss in zip(x, y):
+                layer_sums[layer] += loss
+                layer_counts[layer] += 1
+        else:
+            label = {
+                "btw": "Best to Worst",
+                "wtb": "Worst to Best",
+                "htl": "Late to Early",
+                "lth": "Early to Late",
+                "random": "Random",
+            }[method]
+            plt.plot(x, y, label=label)
+    if take_average:
+        x = sorted(layer_sums.keys())
+        y = [layer_sums[layer] / layer_counts[layer] for layer in x]
+        plt.plot(x, y, label="Average")
     
     plt.grid()
     plt.legend()
@@ -628,13 +889,15 @@ if __name__ == "__main__":
     # # FINAL LOSS BY CATEGORY
     # plot_final_val_loss_by_category(
     #     filename="results-multiple.md",
-    #     header_numbers="all",
+    #     header_numbers="all",  # [f"8000-add-skip-multiple-10-method-{meth}-0" for meth in ["btw", "wtb", "htl", "lth", "random"]],
     #     by="distance_between_layers",
+    #     do_print=True,
     # )
     # plot_final_val_loss_by_category(
     #     filename="results-multiple.md",
     #     header_numbers="all",
-    #     by="sorting_method",
+    #     by="distance_from_output",
+    #     do_print=False,
     # )
     # plot_final_val_loss_by_category(
     #     filename="results-multiple.md",
@@ -660,4 +923,55 @@ if __name__ == "__main__":
     #         title=f"{num_skips} Layers skipped to Output",
     #     )
 
-    plot_loss_by_sorting_method_over_num_layers()
+    # # LOSS OVER LAYERS BY METHOD
+    # plot_loss_by_sorting_method_over_num_layers(
+    #     methods=["all"],
+    #     take_average=True,
+    # )
+
+    # # MISSING HNUMS
+    # with open("results-multiple.md", "r") as f:
+    #     lines = f.readlines()
+    # hnums = []
+    # for line in lines:
+    #     if line.strip().startswith("##"):
+    #         hnums.append(line.replace("##", "").strip())
+    # target_hnums = [
+    #     f"8000-add-skip-multiple-{num_skips}-method-{method}-0"
+    #     for method in ["btw", "wtb", "htl", "lth", "random"]
+    #     for num_skips in range(2, 15)
+    # ]
+    # print(set(target_hnums) - set(hnums))
+
+    # LAMBDAS
+    # parsed, _, _ = get_val_losses_and_lambdas_record(
+    #     filename="results-t-test.md",
+    #     header_numbers=[f"7002-add-skip11-record-from-updated-record-5550steps-{i}" for i in range(22)],
+    #     average_over={"all": [f"7002-add-skip11-record-from-updated-record-5550steps-{i}" for i in range(22)]},
+    # )
+    # import rich
+    # rich.print(parsed)
+
+    # plot_lambdas_record(
+    #     filename="results-t-test.md",
+    #     header_numbers=[f"7002-add-skip11-record-from-updated-record-5550steps-{i}" for i in range(22)],
+    #     plot_all=True,
+    # )
+
+    # plot_final_val_loss_by_category(
+    #     filename="results-multiple.md",
+    #     header_numbers="all",
+    #     by="sorting_method"
+    # )
+
+    # plot_lambdas_over_layer_multiple(
+    #     "results-multiple.md",
+    #     header_numbers=[
+    #         f"8000-add-skip-multiple-{num_skips}-method-{method}-0"
+    #         for method in ["btw", "wtb", "htl", "lth", "random"]
+    #         for num_skips in range(2, 14)
+    #     ]
+    # )
+
+    import rich
+    rich.print(get_hnum_crossing_target_loss_sorted_by_time())
