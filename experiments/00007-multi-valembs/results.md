@@ -979,6 +979,7 @@ step:5250/5550 val_loss:2.933531 train_time:1360111ms step_avg:259.07ms lx:0.783
 step:5375/5550 val_loss:2.926900 train_time:1394012ms step_avg:259.35ms lx:0.789 ls:-0.289
 step:5500/5550 val_loss:2.922008 train_time:1428153ms step_avg:259.66ms lx:0.793 ls:-0.289
 step:5550/5550 val_loss:2.920796 train_time:1441879ms step_avg:259.80ms lx:0.794 ls:-0.289
+
 ## 00002-multi-small-emb-up-projected-embed_dim_div16-0
 
 step:0/5550 val_loss:10.825840 train_time:0ms step_avg:0.08ms lx:1.000 ls:0.000

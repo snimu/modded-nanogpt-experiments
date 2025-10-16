@@ -973,5 +973,28 @@ if __name__ == "__main__":
     #     ]
     # )
 
-    import rich
-    rich.print(get_hnum_crossing_target_loss_sorted_by_time())
+    plot_val_loss(
+        filename="results.md",
+        header_numbers=[
+            f"7007-add-skip11-record-from-updated-record-fixed-alpha-{i}" for i in range(5)
+        ] + ["7001-add-skip11-from-updated-record-0"] + [f"7000-updated-record-{i}" for i in range(5)],
+        average_over={
+            "Baseline w/o skip": [f"7000-updated-record-{i}" for i in range(5)],
+            "Baseline w/ skip": ["7001-add-skip11-from-updated-record-0"],
+            "Fixed lambda_x": [f"7007-add-skip11-record-from-updated-record-fixed-alpha-{i}" for i in range(5)],
+        },
+        x_axis="step",
+    )
+
+    plot_val_loss(
+        filename="results.md",
+        header_numbers=[
+            f"7006-add-skip11-record-from-updated-record-detach-latents-{i}" for i in range(5)
+        ] + ["7001-add-skip11-from-updated-record-0"] + [f"7000-updated-record-{i}" for i in range(5)],
+        average_over={
+            "Baseline w/o skip": [f"7000-updated-record-{i}" for i in range(5)],
+            "Baseline w/ skip": ["7001-add-skip11-from-updated-record-0"],
+            "Detached Latents": [f"7006-add-skip11-record-from-updated-record-detach-latents-{i}" for i in range(5)],
+        },
+        x_axis="step",
+    )
