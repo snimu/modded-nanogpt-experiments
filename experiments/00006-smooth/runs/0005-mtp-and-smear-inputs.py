@@ -549,7 +549,7 @@ class GPT(nn.Module):
         )[None])
         x01 = self.embed2(input_seq)
         x01 = norm(smear_embeddings(
-            s=x01,
+            x=x01,
             x_smear=x01,
             smear_lambda=smear_lambdas[1],
             smear_mlp=nn.Identity(),
