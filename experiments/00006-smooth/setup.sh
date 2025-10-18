@@ -5,25 +5,19 @@ uv pip install numpy tqdm torch huggingface-hub matplotlib rich scipy torchinfo 
 uv pip install --pre torch --index-url https://download.pytorch.org/whl/nightly/cu126 --upgrade
 uv run data/cached_fineweb10B.py
 
-cd runs
-torchrun --standalone --nproc-per-node=8 0006-mtp-difficulty-estimation.py -l=11
-cd .. && python plot_results.py --print-final-stats --path=logs
-cd runs
-torchrun --standalone --nproc-per-node=8 0005-mtp-and-smear-inputs.py -l=11
-cd .. && python plot_results.py --print-final-stats --path=logs
-cd runs
-torchrun --standalone --nproc-per-node=8 0005-mtp-and-smear-inputs.py -l=15
-cd .. && python plot_results.py --print-final-stats --path=logs
-cd runs
-torchrun --standalone --nproc-per-node=8 0004-mtp.py -l=11
-cd .. && python plot_results.py --print-final-stats --path=logs
-cd runs
-torchrun --standalone --nproc-per-node=8 0004-mtp.py -l=15
-cd .. && python plot_results.py --print-final-stats --path=logs
+for ((layer=0; layer<16; layer++)); do
+    cd runs
+    torchrun --standalone --nproc-per-node=8 0006-mtp-difficulty-estimation.py -l=$layer
+    cd .. && python plot_results.py --print-final-stats --path=logs
+    cd runs
+    torchrun --standalone --nproc-per-node=8 0005-mtp-and-smear-inputs.py -l=$layer
+    cd .. && python plot_results.py --print-final-stats --path=logs
+    cd runs
+    torchrun --standalone --nproc-per-node=8 0004-mtp.py -l=$layer
+    cd .. && python plot_results.py --print-final-stats --path=logs
+    cd runs
+done
 
-cd runs
-torchrun --standalone --nproc-per-node=8 0006-mtp-difficulty-estimation.py -l=11
-cd .. && python plot_results.py --print-final-stats --path=logs
 cd runs
 torchrun --standalone --nproc-per-node=8 0003-smear-inputs-and-outputs.py
 cd .. && python plot_results.py --print-final-stats --path=logs
