@@ -6,6 +6,9 @@ uv pip install --pre torch --index-url https://download.pytorch.org/whl/nightly/
 uv run data/cached_fineweb10B.py
 
 cd runs
+torchrun --standalone --nproc-per-node=8 0006-mtp-difficulty-estimation.py -l=11
+cd .. && python plot_results.py --print-final-stats --path=logs
+cd runs
 torchrun --standalone --nproc-per-node=8 0005-mtp-and-smear-inputs.py -l=11
 cd .. && python plot_results.py --print-final-stats --path=logs
 cd runs
