@@ -22,6 +22,9 @@ torchrun --standalone --nproc-per-node=8 0004-mtp.py -l=15
 cd .. && python plot_results.py --print-final-stats --path=logs
 
 cd runs
+torchrun --standalone --nproc-per-node=8 0006-mtp-difficulty-estimation.py -l=11
+cd .. && python plot_results.py --print-final-stats --path=logs
+cd runs
 torchrun --standalone --nproc-per-node=8 0003-smear-inputs-and-outputs.py
 cd .. && python plot_results.py --print-final-stats --path=logs
 cd runs
