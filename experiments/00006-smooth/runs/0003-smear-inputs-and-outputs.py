@@ -380,14 +380,29 @@ def next_multiple_of_n(v: float | int, *, n: int):
 
 
 def smear_embeddings(
-        x: Tensor,
-        smear_lambda: Tensor,
-        smear_weight: Tensor,
-) -> Tensor:
-    # smear token embed forward 1 position @classiclarryd
-    x_smear = x[1:, :smear_weight.size(-1)]
+    x: torch.Tensor,
+    x_smear: torch.Tensor,
+    smear_lambda: torch.Tensor,
+    smear_mlp: torch.nn.Module,
+    smear_weight: torch.Tensor,
+) -> torch.Tensor:
+    # make gate: [B, T, 1] or [T, 1]
+    x_smear = smear_mlp(norm(x_smear))
     smear_gate_out = smear_lambda * torch.sigmoid(F.linear(x_smear, smear_weight))
-    return torch.cat([x[:1], x[1:] + smear_gate_out * x[:-1]])
+    smear_gate_out = smear_gate_out.to(x.dtype)
+
+    if x.ndim == 2:
+        # x: [T, D]
+        return torch.cat(
+            [x[:1], x[1:] + smear_gate_out[1:] * x[:-1]],
+            dim=0,  # time dimension for 2D
+        )
+    else:
+        # x: [B, T, D]
+        return torch.cat(
+            [x[:, :1], x[:, 1:] + smear_gate_out[:, 1:] * x[:, :-1]],
+            dim=1,  # time dimension for 3D
+        )
 
 
 class GPT(nn.Module):
