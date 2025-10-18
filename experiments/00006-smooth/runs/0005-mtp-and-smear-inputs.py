@@ -539,14 +539,20 @@ class GPT(nn.Module):
         assert len(block_masks) == len(self.blocks)
 
         smear_lambdas = self.scalars[-5:-3]
+        x = self.embed1(input_seq)
         x = x00 = norm(smear_embeddings(
-            self.embed1(input_seq),
+            x=x,
+            x_smear=x,
             smear_lambda=smear_lambdas[0],
+            smear_mlp=nn.Identity(),
             smear_weight=self.smear_weight_in_1,
         )[None])
+        x01 = self.embed2(input_seq)
         x01 = norm(smear_embeddings(
-            self.embed2(input_seq),
+            s=x01,
+            x_smear=x01,
             smear_lambda=smear_lambdas[1],
+            smear_mlp=nn.Identity(),
             smear_weight=self.smear_weight_in_2,
         )[None])
 
