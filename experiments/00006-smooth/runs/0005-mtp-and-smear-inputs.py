@@ -1,3 +1,4 @@
+import argparse
 import os
 import sys
 
@@ -328,9 +329,9 @@ class CausalSelfAttention(nn.Module):
 
 
 class MLP(nn.Module):
-    def __init__(self, dim: int):
+    def __init__(self, dim: int, expansion_factor: int = 4):
         super().__init__()
-        hdim = 4 * dim
+        hdim = expansion_factor * dim
         self.fc_w = nn.Parameter(init_linear(torch.empty(hdim, dim)).bfloat16())
         self.proj_w = nn.Parameter(torch.zeros(dim, hdim).bfloat16())
         self.fc_w.wd_mul = 2.0
@@ -379,6 +380,20 @@ def next_multiple_of_n(v: float | int, *, n: int):
     return next(x for x in range(n, int(v) + 1 + n, n) if x >= v)
 
 
+def smear_embeddings(
+        x: Tensor,
+        x_smear: Tensor,
+        smear_lambda: Tensor,
+        smear_mlp: Tensor,
+        smear_weight: Tensor,
+) -> Tensor:
+    # smear token embed forward 1 position @classiclarryd
+    x_smear = x_smear[1:, :smear_weight.size(-1)]
+    x_smear = smear_mlp(norm(x_smear))
+    smear_gate_out = smear_lambda * torch.sigmoid(F.linear(x_smear, smear_weight))
+    return torch.cat([x[:1], x[1:] + smear_gate_out * x[:-1]])
+
+
 class GPT(nn.Module):
     def __init__(
         self,
@@ -387,10 +402,16 @@ class GPT(nn.Module):
         num_heads: int,
         model_dim: int,
         max_seq_len: int,
+        smear_layer: int,
     ):
         super().__init__()
+        self.smear_layer = smear_layer
         self.embed1 = nn.Embedding(vocab_size, model_dim)
         self.embed2 = nn.Embedding(vocab_size, model_dim)
+        self.smear_weight_in_1 = nn.Parameter(init_linear(torch.empty(1, 12)).bfloat16())
+        self.smear_weight_in_2 = nn.Parameter(init_linear(torch.empty(1, 12)).bfloat16())
+        self.smear_weight = nn.Parameter(init_linear(torch.empty(1, model_dim)).bfloat16())
+        self.smear_mlp = MLP(model_dim, expansion_factor=0.5)
         # token value embeddings by @KoszarskyB - inspired by @Grad62304977's value residual implementation following https://arxiv.org/abs/2410.17897
         # value embedding code simplification inspired by @ragulpr https://github.com/KellerJordan/modded-nanogpt/pull/78
         self.value_embeds = nn.ModuleList(
@@ -416,6 +437,7 @@ class GPT(nn.Module):
                     *[
                         torch.tensor([0.5, 0.5]) for _ in range(num_layers)
                     ],  # SA lambdas
+                    torch.zeros(3),  # smear lambdas
                     torch.tensor([1.0, 0.0]),  # skip-to-head lambdas
                 ]
             )
@@ -516,10 +538,17 @@ class GPT(nn.Module):
         ]
         assert len(block_masks) == len(self.blocks)
 
-        x = x00 = norm(
-            self.embed1(input_seq)[None]
-        )  # use of norm here by @Grad62304977
-        x01 = norm(self.embed2(input_seq)[None])
+        smear_lambdas = self.scalars[-5:-3]
+        x = x00 = norm(smear_embeddings(
+            self.embed1(input_seq),
+            smear_lambda=smear_lambdas[0],
+            smear_weight=self.smear_weight_in_1,
+        )[None])
+        x01 = norm(smear_embeddings(
+            self.embed2(input_seq),
+            smear_lambda=smear_lambdas[1],
+            smear_weight=self.smear_weight_in_2,
+        )[None])
 
         skip_connections = []
         skip_map = {
@@ -542,6 +571,14 @@ class GPT(nn.Module):
 
         skip_lambdas = self.scalars[-2:]
         x = norm(x) * skip_lambdas[0] + norm(skip_connections[11]) * skip_lambdas[1]
+        smear_lambda = self.scalars[-3]
+        x = smear_embeddings(
+            x=x,
+            x_smear=skip_connections[self.smear_layer],
+            smear_lambda=smear_lambda,
+            smear_mlp=self.smear_mlp,
+            smear_weight=self.smear_weight,
+        )
         if self.training:
             logits: Tensor = F.linear(
                 x.flatten(end_dim=1), self.lm_head_w.bfloat16()
@@ -640,6 +677,10 @@ class Hyperparameters:
 
 args = Hyperparameters()
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--smear-layer", "-l", type=int, choices=list(range(16)), default=15)
+smear_layer = parser.parse_args().smear_layer
+
 run_id = int(os.environ.get("RUN_ID", 0))
 # torchrun sets these env variables
 rank = int(os.environ["RANK"])
@@ -655,7 +696,7 @@ master_process = rank == 0  # this process will do logging, checkpointing etc.
 # begin logging
 if master_process:
     run_id_full = f"{run_id:03d}_{uuid.uuid4()}"
-    path = "../logs/0000-baseline"
+    path = f"../logs/0005-mtp-and-smear-inputs-smear_layer{smear_layer}"
     os.makedirs(path, exist_ok=True)
     logfile = f"{path}/{run_id_full}.txt"
     print(logfile)
@@ -725,6 +766,7 @@ model: nn.Module = GPT(
     num_heads=8,
     model_dim=1024,
     max_seq_len=max(args.train_seq_len, args.val_seq_len),
+    smear_layer=smear_layer,
 ).cuda()
 for m in model.modules():
     if isinstance(m, nn.Embedding):
@@ -745,8 +787,11 @@ embed_params = [
 ]
 scalar_params = [model.scalars]
 head_params: list[nn.Parameter] = [model.lm_head_w]
+smear_weight_params: list[nn.Parameter] = [model.smear_weight]
+smear_weight_in_params: list[nn.Parameter] = [model.smear_weight_in_1, model.smear_weight_in_2]
+smear_mlp_params: list[nn.Parameter] = [p for p in model.smear_mlp.parameters() if p.ndim >= 2]
 # sanity check
-params_collections = [hidden_matrix_params, embed_params, scalar_params, head_params]
+params_collections = [hidden_matrix_params, embed_params, scalar_params, head_params, smear_mlp_params, smear_weight_params, smear_weight_in_params]
 optimized_parameters_set = {p for params in params_collections for p in params}
 assert optimized_parameters_set == {*model.parameters()}
 assert len(optimized_parameters_set) == sum(len(lst) for lst in params_collections)
@@ -767,7 +812,16 @@ inner_optimizers = [
 inner_hidden_optim = Muon(
     hidden_matrix_params, lr=0.03, momentum=0.95, update_smoothing=0.2, rank=rank, world_size=world_size
 )
-inner_optimizers += [inner_hidden_optim]
+inner_smear_weight_optim = Muon(
+    smear_weight_params, lr=0.03, momentum=0.95, update_smoothing=0.2, rank=rank, world_size=world_size
+)
+inner_smear_mlp_optim = Muon(
+    smear_mlp_params, lr=0.03, momentum=0.95, update_smoothing=0.2, rank=rank, world_size=world_size
+)
+inner_smear_mlp_optim = Muon(
+    smear_weight_in_params, lr=0.03, momentum=0.95, update_smoothing=0.2, rank=rank, world_size=world_size
+)
+inner_optimizers += [inner_hidden_optim, inner_smear_weight_optim, inner_smear_mlp_optim]
 outer_optim = Snoo(model, lr=0.68, momentum=0.37, k=28)
 all_optimizers: list[torch.optim.Optimizer] = [outer_optim] + inner_optimizers
 
@@ -877,8 +931,12 @@ for step in range(train_steps + 1):
         del val_loader
         dist.all_reduce(val_loss, op=dist.ReduceOp.AVG)
         skip_lambdas = model.scalars[-2:]
+        smear_lambda = model.scalars[-3]
         print0(
-            f"step:{step}/{train_steps} val_loss:{val_loss:.6f} train_time:{training_time_ms:.0f}ms step_avg:{training_time_ms/max(step, 1):.2f}ms lx:{skip_lambdas[0]:.3f} ls:{skip_lambdas[1]:.3f}",
+            f"step:{step}/{train_steps} val_loss:{val_loss:.6f} train_time:{training_time_ms:.0f}ms "
+            f"step_avg:{training_time_ms/max(step, 1):.2f}ms "
+            f"l_smear:{smear_lambda} "
+            f"lx:{skip_lambdas[0]:.3f} ls:{skip_lambdas[1]:.3f}",
             console=True,
         )
         model.train()
