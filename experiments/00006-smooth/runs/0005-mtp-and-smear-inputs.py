@@ -396,6 +396,7 @@ def smear_embeddings(
     else:
         assert x_smear.ndim >2, f"{x_smear.ndim=}"
         x = torch.cat([x[:, :1], x[:, 1:] + smear_gate_out * x[:, :-1]])
+    return x
 
 
 class GPT(nn.Module):
