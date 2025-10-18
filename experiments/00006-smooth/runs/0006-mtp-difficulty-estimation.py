@@ -394,8 +394,7 @@ def smear_embeddings(
     if x.ndim == 2:  # x: [T, D]
         gate_prev = gate[:-1]      # [T-1, 1]
         gate_this = gate[1:]       # [T-1, 1]
-        gate_tminus1 = smear_lambda * (gate_prev * (gate_prev - gate_this))
-        gate_tminus1 = gate_tminus1.to(x.dtype)
+        gate_tminus1 = smear_lambda * (gate_prev * (gate_prev - gate_this)) + 0.01
         return torch.cat(
             [x[:1], x[1:] + gate_tminus1 * x[:-1]],
             dim=0,
@@ -403,8 +402,7 @@ def smear_embeddings(
     else:            # x: [B, T, D]
         gate_prev = gate[:, :-1]   # [B, T-1, 1]
         gate_this = gate[:, 1:]    # [B, T-1, 1]
-        gate_tminus1 = smear_lambda * (gate_prev * (gate_prev - gate_this))
-        gate_tminus1 = gate_tminus1.to(x.dtype)
+        gate_tminus1 = smear_lambda * (gate_prev * (gate_prev - gate_this)) + 0.01
         return torch.cat(
             [x[:, :1], x[:, 1:] + gate_tminus1 * x[:, :-1]],
             dim=1,
