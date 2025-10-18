@@ -388,10 +388,14 @@ def smear_embeddings(
         smear_weight: Tensor,
 ) -> Tensor:
     # smear token embed forward 1 position @classiclarryd
-    x_smear = x_smear[1:, :smear_weight.size(-1)]
     x_smear = smear_mlp(norm(x_smear))
     smear_gate_out = smear_lambda * torch.sigmoid(F.linear(x_smear, smear_weight))
-    return torch.cat([x[:1], x[1:] + smear_gate_out * x[:-1]])
+    if x.ndim == 2:
+        assert x_smear.ndim == 2, f"{x_smear.ndim=}"
+        x = torch.cat([x[:1], x[1:] + smear_gate_out * x[:-1]])
+    else:
+        assert x_smear.ndim >2, f"{x_smear.ndim=}"
+        x = torch.cat([x[:, :1], x[:, 1:] + smear_gate_out * x[:, :-1]])
 
 
 class GPT(nn.Module):
