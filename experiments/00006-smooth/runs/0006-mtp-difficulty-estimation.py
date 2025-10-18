@@ -390,11 +390,12 @@ def smear_embeddings(
     # Build gate: [B,T,1] or [T,1]
     x_smear = smear_mlp(norm(x_smear))
     gate = torch.sigmoid(F.linear(x_smear, smear_weight))  # same shape as before
+    eps = 0.001  # avoid zero-grad at first step
 
     if x.ndim == 2:  # x: [T, D]
         gate_prev = gate[:-1]      # [T-1, 1]
         gate_this = gate[1:]       # [T-1, 1]
-        gate_tminus1 = smear_lambda * (gate_prev * (gate_prev - gate_this)) + 0.01
+        gate_tminus1 = smear_lambda * (gate_prev * (gate_prev - gate_this + eps))
         return torch.cat(
             [x[:1], x[1:] + gate_tminus1 * x[:-1]],
             dim=0,
@@ -402,7 +403,7 @@ def smear_embeddings(
     else:            # x: [B, T, D]
         gate_prev = gate[:, :-1]   # [B, T-1, 1]
         gate_this = gate[:, 1:]    # [B, T-1, 1]
-        gate_tminus1 = smear_lambda * (gate_prev * (gate_prev - gate_this)) + 0.01
+        gate_tminus1 = smear_lambda * (gate_prev * (gate_prev - gate_this + eps))
         return torch.cat(
             [x[:, :1], x[:, 1:] + gate_tminus1 * x[:, :-1]],
             dim=1,
