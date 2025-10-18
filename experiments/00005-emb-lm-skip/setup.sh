@@ -1,9 +1,36 @@
 pip install uv
 uv venv
 source .venv/bin/activate
-uv pip install numpy tqdm torch huggingface-hub matplotlib rich scipy torchinfo
+uv pip install numpy tqdm torch huggingface-hub matplotlib rich scipy torchinfo setuptools
 uv pip install --pre torch --index-url https://download.pytorch.org/whl/nightly/cu126 --upgrade
 uv run data/cached_fineweb10B.py
+
+for ((i=0; i<5; i++)); do
+  export RUN_ID=$i
+  cd runs
+  torchrun --standalone --nproc-per-node=8 7012-add-skip11-record-from-updated-record-relu-linear.py
+  cd .. && python plot_results.py --print-final-stats --path=logs
+done
+
+for ((i=0; i<5; i++)); do
+  export RUN_ID=$i
+  cd runs
+  torchrun --standalone --nproc-per-node=8 7009-add-skip11-record-from-updated-record-relu.py
+  cd .. && python plot_results.py --print-final-stats --path=logs
+  cd runs
+  torchrun --standalone --nproc-per-node=8 7011-add-skip11-record-from-updated-record-tanh.py
+  cd .. && python plot_results.py --print-final-stats --path=logs
+done
+
+for ((i=0; i<5; i++)); do
+  export RUN_ID=$i
+  cd runs
+  torchrun --standalone --nproc-per-node=8 7006-add-skip11-record-from-updated-record-detach-latents.py
+  cd .. && python plot_results.py --print-final-stats --path=logs
+  cd runs
+  torchrun --standalone --nproc-per-node=8 7007-add-skip11-record-from-updated-record-fixed-alpha.py
+  cd .. && python plot_results.py --print-final-stats --path=logs
+done
 
 cd runs
 torchrun --standalone --nproc-per-node=8 8001-add-skip-rolling.py

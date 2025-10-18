@@ -973,28 +973,83 @@ if __name__ == "__main__":
     #     ]
     # )
 
-    plot_val_loss(
-        filename="results.md",
-        header_numbers=[
-            f"7007-add-skip11-record-from-updated-record-fixed-alpha-{i}" for i in range(5)
-        ] + ["7001-add-skip11-from-updated-record-0"] + [f"7000-updated-record-{i}" for i in range(5)],
-        average_over={
-            "Baseline w/o skip": [f"7000-updated-record-{i}" for i in range(5)],
-            "Baseline w/ skip": ["7001-add-skip11-from-updated-record-0"],
-            "Fixed lambda_x": [f"7007-add-skip11-record-from-updated-record-fixed-alpha-{i}" for i in range(5)],
-        },
-        x_axis="step",
-    )
+    # plot_val_loss(
+    #     filename="results.md",
+    #     header_numbers=[
+    #         f"7007-add-skip11-record-from-updated-record-fixed-alpha-{i}" for i in range(5)
+    #     ] + ["7001-add-skip11-from-updated-record-0"] + [f"7000-updated-record-{i}" for i in range(5)],
+    #     average_over={
+    #         "Baseline w/o skip": [f"7000-updated-record-{i}" for i in range(5)],
+    #         "Baseline w/ skip": ["7001-add-skip11-from-updated-record-0"],
+    #         "Fixed lambda_x": [f"7007-add-skip11-record-from-updated-record-fixed-alpha-{i}" for i in range(5)],
+    #     },
+    #     x_axis="step",
+    # )
+
+    # plot_val_loss(
+    #     filename="results.md",
+    #     header_numbers=[
+    #         f"7006-add-skip11-record-from-updated-record-detach-latents-{i}" for i in range(5)
+    #     ] + ["7001-add-skip11-from-updated-record-0"] + [f"7000-updated-record-{i}" for i in range(5)],
+    #     average_over={
+    #         "Baseline w/o skip": [f"7000-updated-record-{i}" for i in range(5)],
+    #         "Baseline w/ skip": ["7001-add-skip11-from-updated-record-0"],
+    #         "Detached Latents": [f"7006-add-skip11-record-from-updated-record-detach-latents-{i}" for i in range(5)],
+    #     },
+    #     x_axis="step",
+    # )
+
+    # plot_val_loss(
+    #     filename="results.md",
+    #     header_numbers=[
+    #         f"7007-add-skip11-record-from-updated-record-fixed-alpha-{i}" for i in range(5)
+    #     ] + ["7001-add-skip11-from-updated-record-0"] + [f"7000-updated-record-{i}" for i in range(5)],
+    #     average_over={
+    #         "Baseline w/o skip": [f"7000-updated-record-{i}" for i in range(5)],
+    #         "Baseline w/ skip": ["7001-add-skip11-from-updated-record-0"],
+    #         "Fixed lamba_x": [f"7007-add-skip11-record-from-updated-record-fixed-alpha-{i}" for i in range(5)],
+    #     },
+    #     x_axis="step",
+    # )
 
     plot_val_loss(
         filename="results.md",
         header_numbers=[
-            f"7006-add-skip11-record-from-updated-record-detach-latents-{i}" for i in range(5)
+            f"7012-add-skip11-record-from-updated-record-relu-linear-{i}" for i in range(5)
         ] + ["7001-add-skip11-from-updated-record-0"] + [f"7000-updated-record-{i}" for i in range(5)],
         average_over={
             "Baseline w/o skip": [f"7000-updated-record-{i}" for i in range(5)],
             "Baseline w/ skip": ["7001-add-skip11-from-updated-record-0"],
-            "Detached Latents": [f"7006-add-skip11-record-from-updated-record-detach-latents-{i}" for i in range(5)],
+            "ReLU + Linear Layer": [f"7012-add-skip11-record-from-updated-record-relu-linear-{i}" for i in range(5)],
         },
         x_axis="step",
     )
+
+    # plot_val_loss(
+    #     filename="results.md",
+    #     header_numbers=[
+    #         f"7009-add-skip11-record-from-updated-record-relu-{i}" for i in range(5)
+    #     ] + [
+    #         f"7011-add-skip11-record-from-updated-record-tanh-{i}" for i in range(5)
+    #     ] + ["7001-add-skip11-from-updated-record-0"] + [f"7000-updated-record-{i}" for i in range(5)],
+    #     average_over={
+    #         "Baseline w/o skip": [f"7000-updated-record-{i}" for i in range(5)],
+    #         "Baseline w/ skip": ["7001-add-skip11-from-updated-record-0"],
+    #         "ReLU": [f"7009-add-skip11-record-from-updated-record-relu-{i}" for i in range(5)],
+    #         "TanH": [f"7011-add-skip11-record-from-updated-record-tanh-{i}" for i in range(5)],
+    #     },
+    #     x_axis="step",
+    # )
+
+    
+
+    # plot_val_loss(
+    #     filename="results.md",
+    #     header_numbers=["7005-add-skip11-record-from-updated-record-norm-sum-norm-0"]
+    #         + ["7002-add-skip11-record-from-updated-record-0"],
+    #     average_over={
+    #         "Baseline w/ skip (Record)": ["7002-add-skip11-record-from-updated-record-0"],
+    #         "Norm-sum-norm": ["7005-add-skip11-record-from-updated-record-norm-sum-norm-0"],
+    #     },
+    #     x_axis="time",
+    # )
