@@ -387,28 +387,29 @@ def smear_embeddings(
     smear_mlp: torch.nn.Module,
     smear_weight: torch.Tensor,
 ) -> torch.Tensor:
-    # make gate: [B, T, 1] or [T, 1]
+    # Build gate: [B,T,1] or [T,1]
     x_smear = smear_mlp(norm(x_smear))
-    smear_gate_out = torch.sigmoid(F.linear(x_smear, smear_weight))
+    gate = torch.sigmoid(F.linear(x_smear, smear_weight))  # same shape as before
 
-    if x.ndim == 2:
-        # x: [T, D]
-        sg_prev = smear_gate_out[:-1]
-        sg_this = smear_gate_out[1:]
-        smear_gate_out = sg_prev * (sg_prev - sg_this)
+    if x.ndim == 2:  # x: [T, D]
+        gate_prev = gate[:-1]      # [T-1, 1]
+        gate_this = gate[1:]       # [T-1, 1]
+        gate_tminus1 = smear_lambda * (gate_prev * (gate_prev - gate_this))
+        gate_tminus1 = gate_tminus1.to(x.dtype)
         return torch.cat(
-            [x[:1], x[1:] + smear_gate_out * x[:-1]],
-            dim=0,  # time dimension for 2D
+            [x[:1], x[1:] + gate_tminus1 * x[:-1]],
+            dim=0,
         )
-    else:
-        # x: [B, T, D]
-        sg_prev = smear_gate_out[:, :-1]
-        sg_this = smear_gate_out[:, 1:]
-        smear_gate_out = sg_prev * (sg_prev - sg_this)
+    else:            # x: [B, T, D]
+        gate_prev = gate[:, :-1]   # [B, T-1, 1]
+        gate_this = gate[:, 1:]    # [B, T-1, 1]
+        gate_tminus1 = smear_lambda * (gate_prev * (gate_prev - gate_this))
+        gate_tminus1 = gate_tminus1.to(x.dtype)
         return torch.cat(
-            [x[:, :1], x[:, 1:] + smear_gate_out * x[:, :-1]],
-            dim=1,  # time dimension for 3D
+            [x[:, :1], x[:, 1:] + gate_tminus1 * x[:, :-1]],
+            dim=1,
         )
+
 
 
 class GPT(nn.Module):
