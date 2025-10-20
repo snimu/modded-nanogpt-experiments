@@ -183,6 +183,33 @@ def get_all_final_losses_and_times(path_to_results: str) -> dict[str, dict[Liter
     return results, formatted_results
 
 
+def plot_final_losses_over_names_by_method(
+        filename: str,
+        method_to_header_numbers: dict[str, list[str | int]],
+        x_labels: list[str],
+        x_axis_label: str = "layer",
+        draw_target_loss: bool = True,
+        baseline_loss: float | None = None,
+) -> None:
+    l0 = len(method_to_header_numbers[list(method_to_header_numbers.keys())[0]])
+    assert all(len(method_to_header_numbers[method]) == l0 for method in method_to_header_numbers)
+    assert len(x_labels) == l0
+    
+    markers = ['o', '^', 's', 'D', 'x', '*', '.', '+']
+    for method, marker in zip(method_to_header_numbers, markers, strict=False):
+        losses = get_final_val_losses(filename, method_to_header_numbers[method])
+        plt.plot(x_labels, losses, marker=marker, label=method)
+    if draw_target_loss:
+        plt.axhline(2.92, color='red', linewidth=1, label="Loss target")
+    if baseline_loss:
+        plt.axhline(baseline_loss, color='purple', linewidth=1, label="Baseline")
+    plt.grid()
+    plt.ylabel("Final validation loss")
+    plt.xlabel(x_axis_label.capitalize())
+    plt.legend()
+    plt.show()
+
+
 def get_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--extract-losses", action="store_true")
@@ -207,3 +234,45 @@ if __name__ == "__main__":
         print()
     if args.extract_losses or args.print_final_stats:
         sys.exit(0)  # only perform the freeform code if nothing else is done
+
+    from rich import print
+
+    # headers = [f"0004-mtp-smear_layer{i}-0" for i in range(16)] + ["0000-baseline-0"]
+    # ls = get_final_val_losses(
+    #     filename="results.md",
+    #     header_numbers=headers,
+    # )
+    # d = {ls[i]: h for i, h in enumerate(headers)}
+    # d = {l: d[l] for l in sorted(ls)}
+    # print(d)
+
+    # headers = [f"0006-mtp-difficulty-estimation{i}-0" for i in range(16)] + ["0000-baseline-0"]
+    # ls = get_final_val_losses(
+    #     filename="results.md",
+    #     header_numbers=headers,
+    # )
+    # d = {ls[i]: h for i, h in enumerate(headers)}
+    # d = {l: d[l] for l in sorted(ls)}
+    # print(d)
+
+    # plot_val_loss(
+    #     filename="results.md",
+    #     header_numbers={"0004-mtp-smear_layer6-0", "0000-baseline-0"},
+    #     x_axis="time",
+    # )
+
+    plot_final_losses_over_names_by_method(
+        filename="results.md",
+        method_to_header_numbers={
+            "mpt-smear": [f"0004-mtp-smear_layer{i}-0" for i in range(16)],
+            "mtp-difficulty": [f"0006-mtp-difficulty-estimation{i}-0" for i in range(16)],
+        },
+        x_labels=[str(i) for i in range(16)],
+        baseline_loss=get_final_val_losses("results.md", ["0000-baseline-0"]),
+    )
+
+    # plot_val_loss(
+    #     filename="results.md",
+    #     header_numbers=["0001-smear-inputs-0", "0000-baseline-0", "0004-mtp-smear_layer6-0"],
+    #     x_axis="time",
+    # )

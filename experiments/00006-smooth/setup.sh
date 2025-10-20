@@ -10,17 +10,13 @@ for ((layer=0; layer<16; layer++)); do
     torchrun --standalone --nproc-per-node=8 0006-mtp-difficulty-estimation.py -l=$layer
     cd .. && python plot_results.py --print-final-stats --path=logs
     cd runs
-    torchrun --standalone --nproc-per-node=8 0005-mtp-and-smear-inputs.py -l=$layer
-    cd .. && python plot_results.py --print-final-stats --path=logs
-    cd runs
     torchrun --standalone --nproc-per-node=8 0004-mtp.py -l=$layer
     cd .. && python plot_results.py --print-final-stats --path=logs
     cd runs
+    torchrun --standalone --nproc-per-node=8 0007-mtp-from-last-token.py -l=$layer
+    cd .. && python plot_results.py --print-final-stats --path=logs    
 done
 
-cd runs
-torchrun --standalone --nproc-per-node=8 0003-smear-inputs-and-outputs.py
-cd .. && python plot_results.py --print-final-stats --path=logs
 cd runs
 torchrun --standalone --nproc-per-node=8 0002-smear-outputs.py
 cd .. && python plot_results.py --print-final-stats --path=logs
