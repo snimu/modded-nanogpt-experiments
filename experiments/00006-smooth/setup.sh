@@ -10,13 +10,16 @@ for ((idx=0; idx<5; idx++)); do
     torchrun --standalone --nproc-per-node=8 0009-mtp-same-layer-with-trafo.py -l=7
     cd .. && python plot_results.py --print-final-stats --path=logs
     cd runs
-    torchrun --standalone --nproc-per-node=8 0010-mtp-with-trafo -l=7
+    torchrun --standalone --nproc-per-node=8 0010-mtp-with-trafo.py -l=7
     cd .. && python plot_results.py --print-final-stats --path=logs
     cd runs
     torchrun --standalone --nproc-per-node=8 0011-mtp-no-mlp.py -l=7
-    cd .. && python plot_results.py --print-final-stats --path=logs    
+    cd .. && python plot_results.py --print-final-stats --path=logs
     cd runs
     torchrun --standalone --nproc-per-node=8 0012-mtp-tanh.py -l=7
+    cd .. && python plot_results.py --print-final-stats --path=logs
+    cd runs
+    torchrun --standalone --nproc-per-node=8 0013-mtp-no-gate.py -l=7
     cd .. && python plot_results.py --print-final-stats --path=logs    
 done
 for ((idx=0; idx<5; idx++)); do
@@ -28,10 +31,13 @@ for ((idx=0; idx<5; idx++)); do
     cd .. && python plot_results.py --print-final-stats --path=logs
     cd runs
     torchrun --standalone --nproc-per-node=8 0011-mtp-no-mlp.py -l=4
-    cd .. && python plot_results.py --print-final-stats --path=logs    
+    cd .. && python plot_results.py --print-final-stats --path=logs
     cd runs
     torchrun --standalone --nproc-per-node=8 0012-mtp-tanh.py -l=4
-    cd .. && python plot_results.py --print-final-stats --path=logs    
+    cd .. && python plot_results.py --print-final-stats --path=logs
+    cd runs
+    torchrun --standalone --nproc-per-node=8 0013-mtp-no-gate.py -l=4
+    cd .. && python plot_results.py --print-final-stats --path=logs   
 done
 
 for ((layer=1; layer<16; layer++)); do
