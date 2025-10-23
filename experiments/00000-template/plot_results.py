@@ -176,9 +176,17 @@ def get_all_final_losses_and_times(path_to_results: str) -> dict[str, dict[Liter
             continue
         loss = float(np.mean(final_losses))
         time = float(np.mean(final_times))
-        results[subdir] = {"loss": round(loss, 4), "time": round(time, 2)}
-        formatted_results += f"\n{subdir} —— Loss: {results[subdir]['loss']}, Time: {results[subdir]['time']}"
-
+        results[subdir] = {
+            "loss": round(loss, 4),
+            "time": round(time, 2),
+            "n": len(final_losses),
+            "p": test_mean_below(final_losses)["p_value"],
+        }
+        formatted_results += (
+            f"\n{subdir} —— Loss: {results[subdir]['loss']}, "
+            f"Time: {results[subdir]['time']}, n: {results[subdir]['n']}, "
+            f"p: {results[subdir]['p']}"
+        )
     formatted_results += f"\n{sep}\n\n"
     return results, formatted_results
 

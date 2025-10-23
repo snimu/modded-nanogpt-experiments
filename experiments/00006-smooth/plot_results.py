@@ -176,9 +176,17 @@ def get_all_final_losses_and_times(path_to_results: str) -> dict[str, dict[Liter
             continue
         loss = float(np.mean(final_losses))
         time = float(np.mean(final_times))
-        results[subdir] = {"loss": round(loss, 4), "time": round(time, 2)}
-        formatted_results += f"\n{subdir} —— Loss: {results[subdir]['loss']}, Time: {results[subdir]['time']}"
-
+        results[subdir] = {
+            "loss": round(loss, 4),
+            "time": round(time, 2),
+            "n": len(final_losses),
+            "p": test_mean_below(final_losses)["p_value"],
+        }
+        formatted_results += (
+            f"\n{subdir} —— Loss: {results[subdir]['loss']}, "
+            f"Time: {results[subdir]['time']}, n: {results[subdir]['n']}, "
+            f"p: {results[subdir]['p']}"
+        )
     formatted_results += f"\n{sep}\n\n"
     return results, formatted_results
 
@@ -261,14 +269,18 @@ if __name__ == "__main__":
     #     x_axis="time",
     # )
 
+    baseline_losses = get_final_val_losses("results.md", [f"0000-baseline-{i}" for i in range(12)])
     plot_final_losses_over_names_by_method(
         filename="results.md",
         method_to_header_numbers={
-            "mpt-smear": [f"0004-mtp-smear_layer{i}-0" for i in range(16)],
-            "mtp-difficulty": [f"0006-mtp-difficulty-estimation{i}-0" for i in range(16)],
+            "mpt-smear 1": [f"0004-mtp-smear_layer{i}-0" for i in range(15)],
+            "mtp-difficulty 1": [f"0006-mtp-difficulty-estimation{i}-0" for i in range(15)],
+            "mpt-smear 2": [f"0004-mtp-smear_layer{i}-1" for i in range(15)],
+            "mtp-difficulty 2": [f"0006-mtp-difficulty-estimation{i}-1" for i in range(15)],
+            "mtp from last token": [f"0007-mtp-from-last-token-smear_layer{i}-0" for i in range(15)],
         },
-        x_labels=[str(i) for i in range(16)],
-        baseline_loss=get_final_val_losses("results.md", ["0000-baseline-0"]),
+        x_labels=[str(i) for i in range(15)],
+        baseline_loss=sum(baseline_losses) / len(baseline_losses),
     )
 
     # plot_val_loss(
