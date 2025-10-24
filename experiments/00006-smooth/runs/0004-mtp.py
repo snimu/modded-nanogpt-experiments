@@ -394,16 +394,16 @@ def smear_embeddings(
 
     if x.ndim == 2:
         # x: [T, D]
-        return norm(torch.cat(
+        return torch.cat(
             [x[:1], x[1:] + smear_gate_out[1:] * x[:-1]],
             dim=0,  # time dimension for 2D
-        ))
+        )
     else:
         # x: [B, T, D]
-        return norm(torch.cat(
+        return torch.cat(
             [x[:, :1], x[:, 1:] + smear_gate_out[:, 1:] * x[:, :-1]],
             dim=1,  # time dimension for 3D
-        ))
+        )
 
 
 class GPT(nn.Module):

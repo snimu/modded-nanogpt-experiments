@@ -384,10 +384,10 @@ def smear_embeddings(
     x: torch.Tensor,
     smear_lambda: torch.Tensor,
 ) -> torch.Tensor:
-    return norm(torch.cat(
-        [x[:, :1], x[:, 1:] + smear_lambda[:, 1:] * x[:, :-1]],
+    return torch.cat(
+        [x[:, :1], x[:, 1:] + smear_lambda * x[:, :-1]],
         dim=1,  # time dimension for 3D
-    ))
+    )
 
 
 class GPT(nn.Module):

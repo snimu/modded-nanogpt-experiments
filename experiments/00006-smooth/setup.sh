@@ -7,6 +7,9 @@ uv run data/cached_fineweb10B.py
 
 for ((idx=0; idx<5; idx++)); do
     cd runs
+    torchrun --standalone --nproc-per-node=8 0013-mtp-no-gate.py -l=7
+    cd .. && python plot_results.py --print-final-stats --path=logs  
+    cd runs
     torchrun --standalone --nproc-per-node=8 0009-mtp-same-layer-with-trafo.py -l=7
     cd .. && python plot_results.py --print-final-stats --path=logs
     cd runs
@@ -16,11 +19,8 @@ for ((idx=0; idx<5; idx++)); do
     torchrun --standalone --nproc-per-node=8 0011-mtp-no-mlp.py -l=7
     cd .. && python plot_results.py --print-final-stats --path=logs
     cd runs
-    torchrun --standalone --nproc-per-node=8 0012-mtp-tanh.py -l=7
-    cd .. && python plot_results.py --print-final-stats --path=logs
-    cd runs
-    torchrun --standalone --nproc-per-node=8 0013-mtp-no-gate.py -l=7
-    cd .. && python plot_results.py --print-final-stats --path=logs    
+    torchrun --standalone --nproc-per-node=8 0004-mtp.py -l=7
+    cd .. && python plot_results.py --print-final-stats --path=logs  
 done
 for ((idx=0; idx<5; idx++)); do
     cd runs
@@ -33,7 +33,7 @@ for ((idx=0; idx<5; idx++)); do
     torchrun --standalone --nproc-per-node=8 0011-mtp-no-mlp.py -l=4
     cd .. && python plot_results.py --print-final-stats --path=logs
     cd runs
-    torchrun --standalone --nproc-per-node=8 0012-mtp-tanh.py -l=4
+    torchrun --standalone --nproc-per-node=8 0004-mtp.py -l=4
     cd .. && python plot_results.py --print-final-stats --path=logs
     cd runs
     torchrun --standalone --nproc-per-node=8 0013-mtp-no-gate.py -l=4
