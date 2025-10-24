@@ -382,13 +382,12 @@ def next_multiple_of_n(v: float | int, *, n: int):
 
 def smear_embeddings(
     x: torch.Tensor,
-    x_smear: torch.Tensor,
     smear_lambda: torch.Tensor,
 ) -> torch.Tensor:
-    return torch.cat(
+    return norm(torch.cat(
         [x[:, :1], x[:, 1:] + smear_lambda[:, 1:] * x[:, :-1]],
         dim=1,  # time dimension for 3D
-    )
+    ))
 
 
 class GPT(nn.Module):
@@ -558,7 +557,6 @@ class GPT(nn.Module):
         smear_lambda = self.scalars[-3]
         x = smear_embeddings(
             x=x,
-            x_smear=skip_connections[self.smear_layer],
             smear_lambda=smear_lambda,
         )
         if self.training:

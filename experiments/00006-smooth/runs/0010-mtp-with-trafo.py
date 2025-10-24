@@ -393,10 +393,10 @@ def smear_embeddings(
     smear_gate_out = smear_lambda * torch.sigmoid(F.linear(x_smear, smear_gate_weight))
     smear_gate_out = smear_gate_out.to(x.dtype)
 
-    return torch.cat(
+    return norm(torch.cat(
         [x[:, :1], x[:, 1:] + smear_gate_out[:, 1:] * F.linear(F.relu(x[:, :-1]), smear_trafo_weight)],
         dim=1,  # time dimension for 3D
-    )
+    ))
 
 
 class GPT(nn.Module):

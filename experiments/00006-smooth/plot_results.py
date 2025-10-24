@@ -269,18 +269,37 @@ if __name__ == "__main__":
     #     x_axis="time",
     # )
 
-    baseline_losses = get_final_val_losses("results.md", [f"0000-baseline-{i}" for i in range(12)])
-    plot_final_losses_over_names_by_method(
+    # baseline_losses = get_final_val_losses("results.md", [f"0000-baseline-{i}" for i in range(12)])
+    # plot_final_losses_over_names_by_method(
+    #     filename="results.md",
+    #     method_to_header_numbers={
+    #         "mpt-smear 1": [f"0004-mtp-smear_layer{i}-0" for i in range(15)],
+    #         "mtp-difficulty 1": [f"0006-mtp-difficulty-estimation{i}-0" for i in range(15)],
+    #         "mpt-smear 2": [f"0004-mtp-smear_layer{i}-1" for i in range(15)],
+    #         "mtp-difficulty 2": [f"0006-mtp-difficulty-estimation{i}-1" for i in range(15)],
+    #         "mtp from last token": [f"0007-mtp-from-last-token-smear_layer{i}-0" for i in range(15)],
+    #     },
+    #     x_labels=[str(i) for i in range(15)],
+    #     baseline_loss=sum(baseline_losses) / len(baseline_losses),
+    # )
+
+    plot_val_loss(
         filename="results.md",
-        method_to_header_numbers={
-            "mpt-smear 1": [f"0004-mtp-smear_layer{i}-0" for i in range(15)],
-            "mtp-difficulty 1": [f"0006-mtp-difficulty-estimation{i}-0" for i in range(15)],
-            "mpt-smear 2": [f"0004-mtp-smear_layer{i}-1" for i in range(15)],
-            "mtp-difficulty 2": [f"0006-mtp-difficulty-estimation{i}-1" for i in range(15)],
-            "mtp from last token": [f"0007-mtp-from-last-token-smear_layer{i}-0" for i in range(15)],
+        header_numbers=[f"0009-mtp-same-layer-with-trafo-smear_layer7-{i}" for i in range(4)]
+            + [f"0010-mtp-with-trafo-smear_layer7-{i}" for i in range(3)]
+            + [f"0011-mtp-no-mlp-smear_layer7-{i}" for i in range(2)]
+            + [f"0012-mtp-tanh-smear_layer7-{i}" for i in range(2)]
+            + [f"0000-baseline-{i}" for i in range(12)]
+            + [f"0004-mtp-smear_layer7-{i}" for i in range(2)],
+        average_over={
+            "mtp-same-layer-with-trafo": [f"0009-mtp-same-layer-with-trafo-smear_layer7-{i}" for i in range(4)],
+            "mtp-with-trafo": [f"0010-mtp-with-trafo-smear_layer7-{i}" for i in range(3)],
+            "mtp-no-mlp": [f"0011-mtp-no-mlp-smear_layer7-{i}" for i in range(2)],
+            "mtp-tanh": [f"0012-mtp-tanh-smear_layer7-{i}" for i in range(2)],
+            "baseline": [f"0000-baseline-{i}" for i in range(12)],
+            "mtp": [f"0004-mtp-smear_layer7-{i}" for i in range(2)],
         },
-        x_labels=[str(i) for i in range(15)],
-        baseline_loss=sum(baseline_losses) / len(baseline_losses),
+        x_axis="step",
     )
 
     # plot_val_loss(
