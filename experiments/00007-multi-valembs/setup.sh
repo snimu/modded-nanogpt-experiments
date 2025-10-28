@@ -6,6 +6,13 @@ uv pip install --pre torch --index-url https://download.pytorch.org/whl/nightly/
 uv run data/cached_fineweb10B.py
 
 cd runs
+torchrun --standalone --nproc-per-node=8 00003-multi-emb-via-projection-relu.py
+cd .. && python plot_results.py --print-final-stats --path=logs
+cd runs
+torchrun --standalone --nproc-per-node=8 00000-extra-embs.py --num-ve=4 --num-embs-per-ve=5
+cd .. && python plot_results.py --print-final-stats --path=logs
+
+cd runs
 torchrun --standalone --nproc-per-node=8 00001-multi-emb-via-projection.py
 cd .. && python plot_results.py --print-final-stats --path=logs
 cd runs

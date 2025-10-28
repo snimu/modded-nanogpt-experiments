@@ -208,6 +208,7 @@ def plot_ve_embs_heatmap(
     fmt: str = ".3g",
     cmap: str = "viridis",
     title: str | None = None,
+    as_percent_over: Literal["none", "row", "col"] = "none",
     get_val_losses_fn=None,  # inject your existing function (or it will import from globals)
 ):
     """
@@ -222,6 +223,11 @@ def plot_ve_embs_heatmap(
         Path to the markdown log file.
     reducer : {'final', 'min'} or callable
         How to collapse a run's loss curve to a scalar.
+    as_percent_over : {'none', 'row', 'col'}
+        'none' -> plot raw reduced values.
+        'row'  -> within each row (fixed num_ve), divide by that row's max (ignoring NaN),
+                 then *100, so every row peaks at 100.
+        'col'  -> within each column (fixed num_embs_per_ve), same idea but column-wise.
     """
 
     # Reuse your parser
@@ -257,7 +263,7 @@ def plot_ve_embs_heatmap(
     # Pivot to wide matrix (rows=num_ve, cols=num_embs_per_ve)
     df_pivot = (
         df_long
-        .pivot(values="val", index="num_ve", columns="num_embs_per_ve", aggregate_function="mean")
+        .pivot(values="val", index="num_ve", on="num_embs_per_ve", aggregate_function="mean")
         .sort("num_ve")
     )
 
@@ -266,10 +272,52 @@ def plot_ve_embs_heatmap(
     ordered_cols = ["num_ve"] + [str(c) for c in col_nums]
     df_pivot = df_pivot.select(ordered_cols)
 
-    # Prepare array & labels for seaborn (no pandas used)
-    mat = df_pivot.drop("num_ve").to_numpy()
+    # Prepare matrix & ticks for seaborn (no pandas used)
+    mat = df_pivot.drop("num_ve").to_numpy()  # shape [n_rows, n_cols], dtype could be float + NaN
     ytick = df_pivot["num_ve"].to_list()
     xtick = col_nums
+
+    # --- NEW BLOCK: row/col percentage normalization ---
+    if as_percent_over != "none":
+        mat_norm = mat.astype(float).copy()
+
+        if as_percent_over == "row":
+            # For each row: divide by row max (ignoring NaN), then *100
+            # If a row is all NaN, it stays NaN.
+            for i in range(mat_norm.shape[0]):
+                row = mat_norm[i, :]
+                # compute max ignoring NaN
+                valid = ~np.isnan(row)
+                if np.any(valid):
+                    row_max = np.nanmax(row)
+                    # avoid divide-by-zero (if row_max == 0.0, just leave row as-is)
+                    if row_max != 0.0 and not np.isnan(row_max):
+                        mat_norm[i, valid] = (row[valid] / row_max) * 100.0
+                # else: row all NaN -> leave as NaN
+
+        elif as_percent_over == "col":
+            # For each col: divide by col max (ignoring NaN), then *100
+            for j in range(mat_norm.shape[1]):
+                col = mat_norm[:, j]
+                valid = ~np.isnan(col)
+                if np.any(valid):
+                    col_max = np.nanmax(col)
+                    if col_max != 0.0 and not np.isnan(col_max):
+                        mat_norm[valid, j] = (col[valid] / col_max) * 100.0
+                # else: entire column NaN -> leave as NaN
+        else:
+            raise ValueError("as_percent_over must be 'none', 'row', or 'col'")
+
+        # Replace mat with normalized version for plotting
+        mat = mat_norm
+
+        # Also update df_pivot so the returned frame matches what was plotted
+        # We'll rebuild df_pivot's non-index columns from mat.
+        # df_pivot currently has columns ["num_ve", <col_nums...>]
+        new_cols = {"num_ve": df_pivot["num_ve"]}
+        for j, col_name in enumerate([str(c) for c in col_nums]):
+            new_cols[col_name] = mat[:, j]
+        df_pivot = pl.DataFrame(new_cols)
 
     # Plot
     plt.figure(figsize=(1.2 * max(4, len(xtick)), 1.0 * max(3, len(ytick))))
@@ -284,12 +332,22 @@ def plot_ve_embs_heatmap(
         xticklabels=xtick,
         yticklabels=ytick,
     )
-    ax.set_xlabel("num_embs_per_ve")
-    ax.set_ylabel("num_ve")
+    ax.set_xlabel("Number of Embedding Modules per Value Embedding")
+    ax.set_ylabel("Number of Value Embeddings (each shared between to layers)")
 
+    # Default title logic, now aware of reducer + normalization
     if title is None:
         red_txt = reducer if isinstance(reducer, str) else getattr(reducer, "__name__", "custom")
-        title = f"Validation loss heatmap ({red_txt})"
+        if as_percent_over == "none":
+            title = f"{red_txt.capitalize()} validation loss"
+        elif as_percent_over == "row":
+            title = f"{red_txt.capitalize()} validation loss - % of row max"
+        elif as_percent_over == "col":
+            title = f"{red_txt.capitalize()} validation loss - % of column max"
+        else:
+            # shouldn't happen, but fallback
+            title = f"{red_txt.capitalize()} validation loss"
+
     ax.set_title(title)
 
     plt.tight_layout()
@@ -324,6 +382,46 @@ if __name__ == "__main__":
     if args.extract_losses or args.print_final_stats:
         sys.exit(0)  # only perform the freeform code if nothing else is done
 
+    # MULTIPLE EMBS VIA PROJECTION
+    plot_val_loss(
+        filename="results.md",
+        header_numbers=[
+            "00000-extra-embs-num_ve4-num_embs_per_ve1-0",
+            "00001-multi-emb-via-projection-0",
+            "00002-multi-small-emb-up-projected-embed_dim_div2-0",
+            "00002-multi-small-emb-up-projected-embed_dim_div4-0",
+            "00002-multi-small-emb-up-projected-embed_dim_div8-0",
+            "00002-multi-small-emb-up-projected-embed_dim_div16-0",
+        ],
+        average_over={
+            "baseline": ["00000-extra-embs-num_ve4-num_embs_per_ve1-0"],
+            "1024->1024 projection": ["00001-multi-emb-via-projection-0"],
+            "512->1024 projection": ["00002-multi-small-emb-up-projected-embed_dim_div2-0"],
+            "256->1024 projection": ["00002-multi-small-emb-up-projected-embed_dim_div4-0"],
+            "128->1024 projection": ["00002-multi-small-emb-up-projected-embed_dim_div8-0"],
+            "64->1024 projection": ["00002-multi-small-emb-up-projected-embed_dim_div16-0"],
+        },
+        x_axis="time",
+    )
+    plot_val_loss(
+        filename="results.md",
+        header_numbers=[
+            "00000-extra-embs-num_ve4-num_embs_per_ve1-0",
+            "00004-multi-small-emb-up-projected-relu-embed_dim_div2-0",
+            "00004-multi-small-emb-up-projected-relu-embed_dim_div4-0",
+            "00004-multi-small-emb-up-projected-relu-embed_dim_div8-0",
+            "00004-multi-small-emb-up-projected-relu-embed_dim_div16-0",
+        ],
+        average_over={
+            "baseline": ["00000-extra-embs-num_ve4-num_embs_per_ve1-0"],
+            "512->1024 projection w/ ReLU": ["00004-multi-small-emb-up-projected-relu-embed_dim_div2-0"],
+            "256->1024 projection w/ ReLU": ["00004-multi-small-emb-up-projected-relu-embed_dim_div4-0"],
+            "128->1024 projection w/ ReLU": ["00004-multi-small-emb-up-projected-relu-embed_dim_div8-0"],
+            "64->1024 projection w/ ReLU": ["00004-multi-small-emb-up-projected-relu-embed_dim_div16-0"],
+        },
+        x_axis="time",
+    )
+
     # # LOSS OVER NUM VE
     # plot_val_loss(
     #     filename="results.md",
@@ -353,28 +451,25 @@ if __name__ == "__main__":
     # headers = [f"00000-extra-embs-num_ve{i}-num_embs_per_ve{j}-0"
     #        for i in range(1, 5) for j in range(1, 5)]
 
-    # # Final val_loss per run
-    # plot_ve_embs_heatmap(headers, filename="results.md", reducer="final")
-
-    # # Or: best (minimum) val_loss across each run
-    # plot_ve_embs_heatmap(headers, filename="results.md", reducer="min")
-
-    # # VAL LOSSES NUM_VE=4
-    # plot_val_loss(
-    #     filename="results.md",
-    #     header_numbers=[f"00000-extra-embs-num_ve4-num_embs_per_ve{j}-0" for j in range(1, 5)],
-    #     x_axis="time",
+    # plot_ve_embs_heatmap(
+    #     headers, filename="results.md", reducer="final", as_percent_over="none", fmt=".5g"
+    # )
+    # plot_ve_embs_heatmap(
+    #     headers, filename="results.md", reducer="final", as_percent_over="row", fmt=".5g"
+    # )
+    # plot_ve_embs_heatmap(
+    #     headers, filename="results.md", reducer="final", as_percent_over="col", fmt=".5g"
     # )
 
-    # VAL LOSSES ALL RUNS
-    for num_ve in range(1, 5):
-        plot_val_loss(
-            filename="results.md",
-            header_numbers=[f"00000-extra-embs-num_ve{num_ve}-num_embs_per_ve{j}-0" for j in range(1, 5)],
-            average_over={
-                f"# Embeddings per ve Layer: {j}": [f"00000-extra-embs-num_ve{num_ve}-num_embs_per_ve{j}-0"]
-                for j in range(1, 5)
-            },
-            x_axis="time",
-            title=f"{num_ve} Value Embedding Layer" + ("s" if num_ve > 1 else ""),
-        )
+    # # VAL LOSSES ALL RUNS
+    # for num_ve in range(1, 5):
+    #     plot_val_loss(
+    #         filename="results.md",
+    #         header_numbers=[f"00000-extra-embs-num_ve{num_ve}-num_embs_per_ve{j}-0" for j in range(1, 5)],
+    #         average_over={
+    #             f"# Embeddings per ve Layer: {j}": [f"00000-extra-embs-num_ve{num_ve}-num_embs_per_ve{j}-0"]
+    #             for j in range(1, 5)
+    #         },
+    #         x_axis="step",
+    #         title=f"{num_ve} Value Embedding Layer" + ("s" if num_ve > 1 else ""),
+    #     )
