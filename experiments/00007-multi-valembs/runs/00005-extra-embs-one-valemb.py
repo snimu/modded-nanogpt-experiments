@@ -492,7 +492,7 @@ class GPT(nn.Module):
         assert input_seq.ndim == 1
         ve = [value_embed(input_seq) for value_embed in self.value_embeds]
 
-        num_skipped = len(self.blocks) - 2 * len(self.value_embeds)
+        num_skipped = len(self.blocks) - 2 * self.num_ve
         # Shared value embeddings at every single layer
         ve = [ve for _ in range(self.num_ve)] + [None] * num_skipped + [ve for _ in range(self.num_ve)]
         
