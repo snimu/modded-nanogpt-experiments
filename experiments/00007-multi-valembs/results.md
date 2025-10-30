@@ -1666,6 +1666,55 @@ step:5375/5550 val_loss:2.941290 train_time:1334769ms step_avg:248.33ms lx:0.740
 step:5500/5550 val_loss:2.936249 train_time:1367501ms step_avg:248.64ms lx:0.746 ls:-0.167
 step:5550/5550 val_loss:2.935015 train_time:1380678ms step_avg:248.77ms lx:0.747 ls:-0.168
 
+## 00005-extra-embs-one-valemb-num_ve1-num_embs_per_ve5-0
+
+step:0/5550 val_loss:10.825840 train_time:0ms step_avg:0.21ms lx:1.000 ls:0.000
+step:125/5550 val_loss:4.271485 train_time:28467ms step_avg:227.73ms lx:1.106 ls:0.084
+step:250/5550 val_loss:3.861103 train_time:57140ms step_avg:228.56ms lx:1.009 ls:0.046
+step:375/5550 val_loss:3.690555 train_time:86326ms step_avg:230.20ms lx:0.946 ls:0.020
+step:500/5550 val_loss:3.572665 train_time:115883ms step_avg:231.77ms lx:0.903 ls:-0.004
+step:625/5550 val_loss:3.498499 train_time:145687ms step_avg:233.10ms lx:0.860 ls:-0.028
+step:750/5550 val_loss:3.448567 train_time:175755ms step_avg:234.34ms lx:0.833 ls:-0.048
+step:875/5550 val_loss:3.401592 train_time:205942ms step_avg:235.36ms lx:0.806 ls:-0.063
+step:1000/5550 val_loss:3.367728 train_time:236391ms step_avg:236.39ms lx:0.782 ls:-0.079
+step:1125/5550 val_loss:3.337934 train_time:266889ms step_avg:237.23ms lx:0.766 ls:-0.089
+step:1250/5550 val_loss:3.312893 train_time:297529ms step_avg:238.02ms lx:0.748 ls:-0.099
+step:1375/5550 val_loss:3.293974 train_time:328294ms step_avg:238.76ms lx:0.731 ls:-0.109
+step:1500/5550 val_loss:3.272246 train_time:359057ms step_avg:239.37ms lx:0.720 ls:-0.115
+step:1625/5550 val_loss:3.258108 train_time:389913ms step_avg:239.95ms lx:0.706 ls:-0.123
+step:1750/5550 val_loss:3.242575 train_time:420796ms step_avg:240.46ms lx:0.691 ls:-0.128
+step:1875/5550 val_loss:3.224105 train_time:451695ms step_avg:240.90ms lx:0.684 ls:-0.131
+step:2000/5550 val_loss:3.208124 train_time:482784ms step_avg:241.39ms lx:0.675 ls:-0.135
+step:2125/5550 val_loss:3.193995 train_time:513933ms step_avg:241.85ms lx:0.669 ls:-0.139
+step:2250/5550 val_loss:3.179694 train_time:544956ms step_avg:242.20ms lx:0.666 ls:-0.140
+step:2375/5550 val_loss:3.168202 train_time:576088ms step_avg:242.56ms lx:0.660 ls:-0.144
+step:2500/5550 val_loss:3.156735 train_time:607221ms step_avg:242.89ms lx:0.657 ls:-0.145
+step:2625/5550 val_loss:3.144462 train_time:638360ms step_avg:243.18ms lx:0.653 ls:-0.148
+step:2750/5550 val_loss:3.133563 train_time:669480ms step_avg:243.45ms lx:0.651 ls:-0.151
+step:2875/5550 val_loss:3.123744 train_time:700616ms step_avg:243.69ms lx:0.651 ls:-0.150
+step:3000/5550 val_loss:3.111810 train_time:731829ms step_avg:243.94ms lx:0.650 ls:-0.152
+step:3125/5550 val_loss:3.101796 train_time:762991ms step_avg:244.16ms lx:0.651 ls:-0.153
+step:3250/5550 val_loss:3.089688 train_time:794078ms step_avg:244.33ms lx:0.652 ls:-0.153
+step:3375/5550 val_loss:3.081133 train_time:825213ms step_avg:244.51ms lx:0.652 ls:-0.154
+step:3500/5550 val_loss:3.072024 train_time:856384ms step_avg:244.68ms lx:0.653 ls:-0.155
+step:3625/5550 val_loss:3.063172 train_time:887519ms step_avg:244.83ms lx:0.656 ls:-0.155
+step:3750/5550 val_loss:3.053475 train_time:918671ms step_avg:244.98ms lx:0.656 ls:-0.155
+step:3875/5550 val_loss:3.044481 train_time:949915ms step_avg:245.14ms lx:0.665 ls:-0.157
+step:4000/5550 val_loss:3.034846 train_time:981113ms step_avg:245.28ms lx:0.670 ls:-0.157
+step:4125/5550 val_loss:3.025221 train_time:1012372ms step_avg:245.42ms lx:0.675 ls:-0.158
+step:4250/5550 val_loss:3.016762 train_time:1043782ms step_avg:245.60ms lx:0.678 ls:-0.159
+step:4375/5550 val_loss:3.007306 train_time:1075218ms step_avg:245.76ms lx:0.683 ls:-0.160
+step:4500/5550 val_loss:2.998943 train_time:1106744ms step_avg:245.94ms lx:0.689 ls:-0.162
+step:4625/5550 val_loss:2.989366 train_time:1138364ms step_avg:246.13ms lx:0.697 ls:-0.164
+step:4750/5550 val_loss:2.979722 train_time:1170166ms step_avg:246.35ms lx:0.705 ls:-0.162
+step:4875/5550 val_loss:2.970590 train_time:1202111ms step_avg:246.59ms lx:0.712 ls:-0.163
+step:5000/5550 val_loss:2.962253 train_time:1234075ms step_avg:246.81ms lx:0.721 ls:-0.165
+step:5125/5550 val_loss:2.954125 train_time:1266225ms step_avg:247.07ms lx:0.728 ls:-0.165
+step:5250/5550 val_loss:2.946714 train_time:1298588ms step_avg:247.35ms lx:0.734 ls:-0.166
+step:5375/5550 val_loss:2.939943 train_time:1331056ms step_avg:247.64ms lx:0.742 ls:-0.166
+step:5500/5550 val_loss:2.934888 train_time:1363760ms step_avg:247.96ms lx:0.748 ls:-0.167
+step:5550/5550 val_loss:2.933616 train_time:1376932ms step_avg:248.10ms lx:0.749 ls:-0.167
+
 ## 00005-extra-embs-one-valemb-num_ve2-num_embs_per_ve1-0
 
 step:0/5550 val_loss:10.825840 train_time:0ms step_avg:0.23ms lx:1.000 ls:0.000
