@@ -50,6 +50,8 @@ def get_val_losses(
                 "loss": np.mean(losses, axis=0),
                 "step": steps,
                 "time": np.mean(times, axis=0),
+                "losses": losses.tolist(),
+                "times": times.tolist(),
             }
         parsed = new_parsed
     return parsed, header_numbers, descriptions
@@ -60,12 +62,19 @@ def plot_val_loss(
         filename: str,
         x_axis: str = "step",
         average_over: dict[str, tuple[str, int]] | None = None,
+        plot_all: bool = False,
 ):
     parsed, header_numbers, descriptions = get_val_losses(header_numbers, filename, average_over)
 
+    colors = plt.get_cmap("tab10").colors
     for i, hnum in enumerate(header_numbers):
+        color = colors[i]
+        if plot_all and average_over:
+            for j, loss in enumerate(parsed[hnum]["losses"]):
+                x = parsed["times"][j] if x_axis == "time" else parsed[hnum]["step"]
+                plt.plot(x, loss, color=color, alpha=0.3)
         description = f": {descriptions[i]}" if descriptions[i] else ""
-        plt.plot(parsed[hnum][x_axis], parsed[hnum]["loss"], label=f"{hnum}{description}")
+        plt.plot(parsed[hnum][x_axis], parsed[hnum]["loss"], label=f"{hnum}{description}", color=color, lw=2)
     plt.xlabel("step" if x_axis == "step" else "time (s)")
     plt.ylabel("val_loss")
     plt.legend()
