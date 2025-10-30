@@ -5,6 +5,10 @@ uv pip install numpy tqdm torch huggingface-hub matplotlib rich scipy polars sea
 uv pip install --pre torch --index-url https://download.pytorch.org/whl/nightly/cu126 --upgrade
 uv run data/cached_fineweb10B.py
 
+cd runs
+torchrun --standalone --nproc-per-node=8 00005-extra-embs-one-valemb.py --num-ve=1 --num-embs-per-ve=5
+cd .. && python plot_results.py --print-final-stats --path=logs
+
 for ((num_embs_per_ve=3; num_embs_per_ve<6; num_embs_per_ve++)); do
     cd runs
     torchrun --standalone --nproc-per-node=8 00005-extra-embs-one-valemb.py --num-ve=1 --num-embs-per-ve=$num_embs_per_ve

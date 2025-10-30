@@ -388,46 +388,46 @@ if __name__ == "__main__":
         sys.exit(0)  # only perform the freeform code if nothing else is done
 
     # # MULTIPLE EMBS VIA PROJECTION
-    plot_val_loss(
-        filename="results.md",
-        header_numbers=[
-            "00000-extra-embs-num_ve4-num_embs_per_ve1-0",
-            "00001-multi-emb-via-projection-0",
-            "00002-multi-small-emb-up-projected-embed_dim_div2-0",
-            "00002-multi-small-emb-up-projected-embed_dim_div4-0",
-            "00002-multi-small-emb-up-projected-embed_dim_div8-0",
-            "00002-multi-small-emb-up-projected-embed_dim_div16-0",
-        ],
-        average_over={
-            "baseline": ["00000-extra-embs-num_ve4-num_embs_per_ve1-0"],
-            "1024->1024 projection": ["00001-multi-emb-via-projection-0"],
-            "512->1024 projection": ["00002-multi-small-emb-up-projected-embed_dim_div2-0"],
-            "256->1024 projection": ["00002-multi-small-emb-up-projected-embed_dim_div4-0"],
-            "128->1024 projection": ["00002-multi-small-emb-up-projected-embed_dim_div8-0"],
-            "64->1024 projection": ["00002-multi-small-emb-up-projected-embed_dim_div16-0"],
-        },
-        x_axis="time",
-    )
-    plot_val_loss(
-        filename="results.md",
-        header_numbers=[
-            "00000-extra-embs-num_ve4-num_embs_per_ve1-0",
-            "00003-multi-emb-via-projection-relu-0",
-            "00004-multi-small-emb-up-projected-relu-embed_dim_div2-0",
-            "00004-multi-small-emb-up-projected-relu-embed_dim_div4-0",
-            "00004-multi-small-emb-up-projected-relu-embed_dim_div8-0",
-            "00004-multi-small-emb-up-projected-relu-embed_dim_div16-0",
-        ],
-        average_over={
-            "baseline": ["00000-extra-embs-num_ve4-num_embs_per_ve1-0"],
-            "1024->1024 projection w/ ReLU": ["00003-multi-emb-via-projection-relu-0"],
-            "512->1024 projection w/ ReLU": ["00004-multi-small-emb-up-projected-relu-embed_dim_div2-0"],
-            "256->1024 projection w/ ReLU": ["00004-multi-small-emb-up-projected-relu-embed_dim_div4-0"],
-            "128->1024 projection w/ ReLU": ["00004-multi-small-emb-up-projected-relu-embed_dim_div8-0"],
-            "64->1024 projection w/ ReLU": ["00004-multi-small-emb-up-projected-relu-embed_dim_div16-0"],
-        },
-        x_axis="time",
-    )
+    # plot_val_loss(
+    #     filename="results.md",
+    #     header_numbers=[
+    #         "00000-extra-embs-num_ve4-num_embs_per_ve1-0",
+    #         "00001-multi-emb-via-projection-0",
+    #         "00002-multi-small-emb-up-projected-embed_dim_div2-0",
+    #         "00002-multi-small-emb-up-projected-embed_dim_div4-0",
+    #         "00002-multi-small-emb-up-projected-embed_dim_div8-0",
+    #         "00002-multi-small-emb-up-projected-embed_dim_div16-0",
+    #     ],
+    #     average_over={
+    #         "baseline": ["00000-extra-embs-num_ve4-num_embs_per_ve1-0"],
+    #         "1024->1024 projection": ["00001-multi-emb-via-projection-0"],
+    #         "512->1024 projection": ["00002-multi-small-emb-up-projected-embed_dim_div2-0"],
+    #         "256->1024 projection": ["00002-multi-small-emb-up-projected-embed_dim_div4-0"],
+    #         "128->1024 projection": ["00002-multi-small-emb-up-projected-embed_dim_div8-0"],
+    #         "64->1024 projection": ["00002-multi-small-emb-up-projected-embed_dim_div16-0"],
+    #     },
+    #     x_axis="time",
+    # )
+    # plot_val_loss(
+    #     filename="results.md",
+    #     header_numbers=[
+    #         "00000-extra-embs-num_ve4-num_embs_per_ve1-0",
+    #         "00003-multi-emb-via-projection-relu-0",
+    #         "00004-multi-small-emb-up-projected-relu-embed_dim_div2-0",
+    #         "00004-multi-small-emb-up-projected-relu-embed_dim_div4-0",
+    #         "00004-multi-small-emb-up-projected-relu-embed_dim_div8-0",
+    #         "00004-multi-small-emb-up-projected-relu-embed_dim_div16-0",
+    #     ],
+    #     average_over={
+    #         "baseline": ["00000-extra-embs-num_ve4-num_embs_per_ve1-0"],
+    #         "1024->1024 projection w/ ReLU": ["00003-multi-emb-via-projection-relu-0"],
+    #         "512->1024 projection w/ ReLU": ["00004-multi-small-emb-up-projected-relu-embed_dim_div2-0"],
+    #         "256->1024 projection w/ ReLU": ["00004-multi-small-emb-up-projected-relu-embed_dim_div4-0"],
+    #         "128->1024 projection w/ ReLU": ["00004-multi-small-emb-up-projected-relu-embed_dim_div8-0"],
+    #         "64->1024 projection w/ ReLU": ["00004-multi-small-emb-up-projected-relu-embed_dim_div16-0"],
+    #     },
+    #     x_axis="time",
+    # )
 
     # # LOSS OVER NUM VE
     # plot_val_loss(
@@ -457,7 +457,7 @@ if __name__ == "__main__":
     # # HEATMAP OF FINAL / BEST VAL LOSS OVER NUM VE AND NUM EMB PER VE
     # headers = [
     #     f"00005-extra-embs-one-valemb-num_ve{i}-num_embs_per_ve{j}-0"
-    #     for i in range(2, 5) for j in range(1, 6)
+    #     for i in range(1, 5) for j in range(1, 6)
     # ]
     # # headers = [
     # #     f"00000-extra-embs-num_ve{i}-num_embs_per_ve{j}-0"
@@ -478,31 +478,50 @@ if __name__ == "__main__":
     # )
 
     # # VAL LOSSES ALL RUNS
-    # for num_ve in range(1, 5):
+    # for num_ve in range(1, 4):
+    #     header_numbers = (
+    #         [f"00000-extra-embs-num_ve{num_ve}-num_embs_per_ve{j}-0" for j in range(1, 6)]
+    #         + ["00000-extra-embs-num_ve4-num_embs_per_ve1-0"]
+    #     )
+    #     average_over = {
+    #         f"# Embeddings per ve Layer: {j}": [f"00000-extra-embs-num_ve{num_ve}-num_embs_per_ve{j}-0"]
+    #         for j in range(1, 6)
+    #     }
+    #     average_over["Baseline"] = ["00000-extra-embs-num_ve4-num_embs_per_ve1-0"]
     #     plot_val_loss(
     #         filename="results.md",
-    #         header_numbers=[f"00000-extra-embs-num_ve{num_ve}-num_embs_per_ve{j}-0" for j in range(1, 6)],
-    #         average_over={
-    #             f"# Embeddings per ve Layer: {j}": [f"00000-extra-embs-num_ve{num_ve}-num_embs_per_ve{j}-0"]
-    #             for j in range(1, 6)
-    #         },
+    #         header_numbers=header_numbers,
+    #         average_over=average_over,
     #         x_axis="time",
     #         title=f"{num_ve} Value Embedding Layer" + ("s" if num_ve > 1 else ""),
     #     )
-
+    # header_numbers = (
+    #     [f"00000-extra-embs-num_ve4-num_embs_per_ve{j}-0" for j in range(1, 6)]
+    # )
+    # average_over = {
+    #     f"# Embeddings per ve Layer: {j}" + (" (= Baseline)" if j == 1 else ""):
+    #         [f"00000-extra-embs-num_ve4-num_embs_per_ve{j}-0"]
+    #     for j in range(1, 6)
+    # }
     # plot_val_loss(
     #     filename="results.md",
-    #     header_numbers=[
-    #         "00000-extra-embs-num_ve4-num_embs_per_ve1-0",
-    #         "00005-extra-embs-one-valemb-num_ve3-num_embs_per_ve4-0",
-    #         "00005-extra-embs-one-valemb-num_ve4-num_embs_per_ve4-0",
-    #         "00005-extra-embs-one-valemb-num_ve4-num_embs_per_ve5-0",
-    #     ],
-    #     average_over={
-    #         "baseline": ["00000-extra-embs-num_ve4-num_embs_per_ve1-0"],
-    #         "3-4": ["00005-extra-embs-one-valemb-num_ve3-num_embs_per_ve4-0"],
-    #         "4-4": ["00005-extra-embs-one-valemb-num_ve4-num_embs_per_ve4-0"],
-    #         "4-5": ["00005-extra-embs-one-valemb-num_ve4-num_embs_per_ve5-0"],
-    #     },
+    #     header_numbers=header_numbers,
+    #     average_over=average_over,
     #     x_axis="time",
+    #     title="4 Value Embedding Layers",
     # )
+
+    plot_val_loss(
+        filename="results.md",
+        header_numbers=[
+            "00000-extra-embs-num_ve4-num_embs_per_ve1-0",
+            "00005-extra-embs-one-valemb-num_ve3-num_embs_per_ve4-0",
+            "00005-extra-embs-one-valemb-num_ve4-num_embs_per_ve5-0",
+        ],
+        average_over={
+            "baseline": ["00000-extra-embs-num_ve4-num_embs_per_ve1-0"],
+            "3-4": ["00005-extra-embs-one-valemb-num_ve3-num_embs_per_ve4-0"],
+            "4-5": ["00005-extra-embs-one-valemb-num_ve4-num_embs_per_ve5-0"],
+        },
+        x_axis="time",
+    )
