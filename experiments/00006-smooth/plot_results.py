@@ -292,69 +292,88 @@ if __name__ == "__main__":
     #     baseline_loss=sum(baseline_losses) / len(baseline_losses),
     # )
 
-    plot_val_loss(
-        filename="results.md",
-        header_numbers=[f"0009-mtp-same-layer-with-trafo-smear_layer7-{i}" for i in range(4)]
-            + [f"0010-mtp-with-trafo-smear_layer7-{i}" for i in range(3)]
-            + [f"0011-mtp-no-mlp-smear_layer7-{i}" for i in range(2)]
-            + [f"0012-mtp-tanh-smear_layer7-{i}" for i in range(2)]
-            + [f"0000-baseline-{i}" for i in range(12)]
-            + [f"0004-mtp-smear_layer7-{i}" for i in range(2)],
-        average_over={
-            "mtp-same-layer-with-trafo": [f"0009-mtp-same-layer-with-trafo-smear_layer7-{i}" for i in range(4)],
-            "mtp-with-trafo": [f"0010-mtp-with-trafo-smear_layer7-{i}" for i in range(3)],
-            "mtp-no-mlp": [f"0011-mtp-no-mlp-smear_layer7-{i}" for i in range(2)],
-            "mtp-tanh": [f"0012-mtp-tanh-smear_layer7-{i}" for i in range(2)],
-            "baseline": [f"0000-baseline-{i}" for i in range(12)],
-            "mtp": [f"0004-mtp-smear_layer7-{i}" for i in range(2)],
-        },
-        x_axis="step",
-        plot_all=False,
-    )
+    # plot_val_loss(
+    #     filename="results.md",
+    #     header_numbers=[f"0009-mtp-same-layer-with-trafo-smear_layer7-{i}" for i in range(4)]
+    #         + [f"0010-mtp-with-trafo-smear_layer7-{i}" for i in range(3)]
+    #         + [f"0011-mtp-no-mlp-smear_layer7-{i}" for i in range(2)]
+    #         + [f"0012-mtp-tanh-smear_layer7-{i}" for i in range(2)]
+    #         + [f"0000-baseline-{i}" for i in range(12)]
+    #         + [f"0004-mtp-smear_layer7-{i}" for i in range(2)],
+    #     average_over={
+    #         "mtp-same-layer-with-trafo": [f"0009-mtp-same-layer-with-trafo-smear_layer7-{i}" for i in range(4)],
+    #         "mtp-with-trafo": [f"0010-mtp-with-trafo-smear_layer7-{i}" for i in range(3)],
+    #         "mtp-no-mlp": [f"0011-mtp-no-mlp-smear_layer7-{i}" for i in range(2)],
+    #         "mtp-tanh": [f"0012-mtp-tanh-smear_layer7-{i}" for i in range(2)],
+    #         "baseline": [f"0000-baseline-{i}" for i in range(12)],
+    #         "mtp": [f"0004-mtp-smear_layer7-{i}" for i in range(2)],
+    #     },
+    #     x_axis="step",
+    #     plot_all=False,
+    # )
 
-    layer = 4
-    plot_val_loss(
-        filename="results-pi.md",
-        header_numbers=[f"0000-baseline-{i}" for i in range(5)]
-            + [f"0004-mtp-smear_layer{layer}-{i}" for i in range(5)]
-            + [f"0009-mtp-same-layer-with-trafo-smear_layer{layer}-{i}" for i in range(5)]
-            + [f"0010-mtp-with-trafo-smear_layer{layer}-{i}" for i in range(5)]
-            + [f"0011-mtp-no-mlp-smear_layer{layer}-{i}" for i in range(5)]
-            + [f"0013-mtp-no-gate-smear_layer{layer}-{i}" for i in range(5)],
-        average_over={
-            "baseline": [f"0000-baseline-{i}" for i in range(5)],
-            "mtp": [f"0004-mtp-smear_layer{layer}-{i}" for i in range(5)],
-            "same layer with trafo": [f"0009-mtp-same-layer-with-trafo-smear_layer{layer}-{i}" for i in range(5)],
-            "mtp with trafo": [f"0010-mtp-with-trafo-smear_layer{layer}-{i}" for i in range(5)],
-            "mtp, no MLP": [f"0011-mtp-no-mlp-smear_layer{layer}-{i}" for i in range(5)],
-            "mtp, no gate": [f"0013-mtp-no-gate-smear_layer{layer}-{i}" for i in range(5)],
-        },
-        x_axis="step",
-        plot_all=False,
-    )
-    layer = 7
-    plot_val_loss(
-        filename="results-pi.md",
-        header_numbers=[f"0000-baseline-{i}" for i in range(5)]
-            + [f"0004-mtp-smear_layer{layer}-{i}" for i in range(5)]
-            + [f"0009-mtp-same-layer-with-trafo-smear_layer{layer}-{i}" for i in range(5)]
-            + [f"0010-mtp-with-trafo-smear_layer{layer}-{i}" for i in range(5)]
-            + [f"0011-mtp-no-mlp-smear_layer{layer}-{i}" for i in range(5)]
-            + [f"0013-mtp-no-gate-smear_layer{layer}-{i}" for i in range(5)],
-        average_over={
-            "baseline": [f"0000-baseline-{i}" for i in range(5)],
-            "mtp": [f"0004-mtp-smear_layer{layer}-{i}" for i in range(5)],
-            "same layer with trafo": [f"0009-mtp-same-layer-with-trafo-smear_layer{layer}-{i}" for i in range(5)],
-            "mtp with trafo": [f"0010-mtp-with-trafo-smear_layer{layer}-{i}" for i in range(5)],
-            "mtp, no MLP": [f"0011-mtp-no-mlp-smear_layer{layer}-{i}" for i in range(5)],
-            "mtp, no gate": [f"0013-mtp-no-gate-smear_layer{layer}-{i}" for i in range(5)],
-        },
-        x_axis="step",
-        plot_all=False,
-    )
+    # layer = 4
+    # plot_val_loss(
+    #     filename="results-pi.md",
+    #     header_numbers=[f"0000-baseline-{i}" for i in range(5)]
+    #         + [f"0004-mtp-smear_layer{layer}-{i}" for i in range(5)]
+    #         + [f"0009-mtp-same-layer-with-trafo-smear_layer{layer}-{i}" for i in range(5)]
+    #         + [f"0010-mtp-with-trafo-smear_layer{layer}-{i}" for i in range(5)]
+    #         + [f"0011-mtp-no-mlp-smear_layer{layer}-{i}" for i in range(5)]
+    #         + [f"0013-mtp-no-gate-smear_layer{layer}-{i}" for i in range(5)],
+    #     average_over={
+    #         "baseline": [f"0000-baseline-{i}" for i in range(5)],
+    #         "mtp": [f"0004-mtp-smear_layer{layer}-{i}" for i in range(5)],
+    #         "same layer with trafo": [f"0009-mtp-same-layer-with-trafo-smear_layer{layer}-{i}" for i in range(5)],
+    #         "mtp with trafo": [f"0010-mtp-with-trafo-smear_layer{layer}-{i}" for i in range(5)],
+    #         "mtp, no MLP": [f"0011-mtp-no-mlp-smear_layer{layer}-{i}" for i in range(5)],
+    #         "mtp, no gate": [f"0013-mtp-no-gate-smear_layer{layer}-{i}" for i in range(5)],
+    #     },
+    #     x_axis="step",
+    #     plot_all=False,
+    # )
+    # layer = 7
+    # plot_val_loss(
+    #     filename="results-pi.md",
+    #     header_numbers=[f"0000-baseline-{i}" for i in range(5)]
+    #         + [f"0004-mtp-smear_layer{layer}-{i}" for i in range(5)]
+    #         + [f"0009-mtp-same-layer-with-trafo-smear_layer{layer}-{i}" for i in range(5)]
+    #         + [f"0010-mtp-with-trafo-smear_layer{layer}-{i}" for i in range(5)]
+    #         + [f"0011-mtp-no-mlp-smear_layer{layer}-{i}" for i in range(5)]
+    #         + [f"0013-mtp-no-gate-smear_layer{layer}-{i}" for i in range(5)],
+    #     average_over={
+    #         "baseline": [f"0000-baseline-{i}" for i in range(5)],
+    #         "mtp": [f"0004-mtp-smear_layer{layer}-{i}" for i in range(5)],
+    #         "same layer with trafo": [f"0009-mtp-same-layer-with-trafo-smear_layer{layer}-{i}" for i in range(5)],
+    #         "mtp with trafo": [f"0010-mtp-with-trafo-smear_layer{layer}-{i}" for i in range(5)],
+    #         "mtp, no MLP": [f"0011-mtp-no-mlp-smear_layer{layer}-{i}" for i in range(5)],
+    #         "mtp, no gate": [f"0013-mtp-no-gate-smear_layer{layer}-{i}" for i in range(5)],
+    #     },
+    #     x_axis="step",
+    #     plot_all=False,
+    # )
 
     # plot_val_loss(
     #     filename="results.md",
     #     header_numbers=["0001-smear-inputs-0", "0000-baseline-0", "0004-mtp-smear_layer6-0"],
     #     x_axis="time",
     # )
+
+    plot_val_loss(
+        filename="results-final.md",
+        header_numbers=[f"0000-baseline-{i}" for i in range(10)]
+                + [f"0004-mtp-smear_layer7-{i}" for i in range(10)]
+                + [f"0009-mtp-same-layer-with-trafo-smear_layer7-{i}" for i in range(10)]
+                + [f"0010-mtp-with-trafo-smear_layer7-{i}" for i in range(10)]
+                + [f"0013-mtp-no-gate-smear_layer15-{i}" for i in range(10)]
+                + [f"0014-mtp-with-trafo-no-gate-smear_layer15-{i}" for i in range(10)],
+        average_over={
+            "baseline": [f"0000-baseline-{i}" for i in range(10)],
+            "mtp": [f"0004-mtp-smear_layer7-{i}" for i in range(10)],
+            "mtp-same-layer-trafo": [f"0009-mtp-same-layer-with-trafo-smear_layer7-{i}" for i in range(10)],
+            "mtp-trafo": [f"0010-mtp-with-trafo-smear_layer7-{i}" for i in range(10)],
+            "mtp-no-gate": [f"0013-mtp-no-gate-smear_layer15-{i}" for i in range(10)],
+            "mtp-trafo-no-gate": [f"0014-mtp-with-trafo-no-gate-smear_layer15-{i}" for i in range(10)],
+        },
+        x_axis="time",
+    )

@@ -11,6 +11,19 @@ for ((idx=0; idx<10; idx++)); do
     cd .. && python plot_results.py --print-final-stats --path=logs  
 done
 
+cd runs
+torchrun --standalone --nproc-per-node=8 0004-mtp.py -l=7
+cd .. && python plot_results.py --print-final-stats --path=logs 
+cd runs
+torchrun --standalone --nproc-per-node=8 0013-mtp-no-gate.py
+cd .. && python plot_results.py --print-final-stats --path=logs 
+cd runs
+torchrun --standalone --nproc-per-node=8 0015-scale-up-1B-baseline.py
+cd .. && python plot_results.py --print-final-stats --path=logs 
+cd runs
+torchrun --standalone --nproc-per-node=8 0016-scale-up-1B-mtp-with-trafo-no-gate.py
+cd .. && python plot_results.py --print-final-stats --path=logs 
+
 for ((idx=0; idx<10; idx++)); do
     cd runs
     torchrun --standalone --nproc-per-node=8 0000-baseline.py
