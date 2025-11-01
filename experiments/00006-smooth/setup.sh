@@ -5,6 +5,12 @@ uv pip install numpy tqdm torch huggingface-hub matplotlib rich scipy torchinfo 
 uv pip install --pre torch --index-url https://download.pytorch.org/whl/nightly/cu126 --upgrade
 uv run data/cached_fineweb10B.py
 
+for ((idx=0; idx<20; idx++)); do
+    cd runs
+    torchrun --standalone --nproc-per-node=8 0018-record.py
+    cd .. && python plot_results.py --print-final-stats --path=logs  
+done
+
 for ((idx=0; idx<10; idx++)); do
     cd runs
     torchrun --standalone --nproc-per-node=8 0014-mtp-with-trafo-no-gate.py
@@ -21,7 +27,7 @@ cd runs
 torchrun --standalone --nproc-per-node=8 0015-scale-up-1B-baseline.py
 cd .. && python plot_results.py --print-final-stats --path=logs 
 cd runs
-torchrun --standalone --nproc-per-node=8 0016-scale-up-1B-mtp-with-trafo-no-gate.py
+torchrun --standalone --nproc-per-node=8 0017-scale-up-1B-mtp-no-gate.py
 cd .. && python plot_results.py --print-final-stats --path=logs 
 
 for ((idx=0; idx<10; idx++)); do
