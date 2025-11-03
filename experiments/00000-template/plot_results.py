@@ -71,7 +71,7 @@ def plot_val_loss(
         color = colors[i]
         if plot_all and average_over:
             for j, loss in enumerate(parsed[hnum]["losses"]):
-                x = parsed["times"][j] if x_axis == "time" else parsed[hnum]["step"]
+                x = parsed[hnum]["times"][j] if x_axis == "time" else parsed[hnum]["step"]
                 plt.plot(x, loss, color=color, alpha=0.3)
         description = f": {descriptions[i]}" if descriptions[i] else ""
         plt.plot(parsed[hnum][x_axis], parsed[hnum]["loss"], label=f"{hnum}{description}", color=color, lw=2)

@@ -5,7 +5,9 @@ uv pip install numpy tqdm torch huggingface-hub matplotlib rich scipy torchinfo 
 uv pip install --pre torch --index-url https://download.pytorch.org/whl/nightly/cu126 --upgrade
 uv run data/cached_fineweb10B.py
 
-for ((idx=0; idx<20; idx++)); do
+torchrun --standalone --nproc-per-node=8 train_gpt_medium.py
+
+for ((idx=0; idx<40; idx++)); do
     cd runs
     torchrun --standalone --nproc-per-node=8 0018-record.py
     cd .. && python plot_results.py --print-final-stats --path=logs  

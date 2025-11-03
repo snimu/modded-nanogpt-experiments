@@ -71,7 +71,7 @@ def plot_val_loss(
         color = colors[i]
         if plot_all and average_over:
             for j, loss in enumerate(parsed[hnum]["losses"]):
-                x = parsed["times"][j] if x_axis == "time" else parsed[hnum]["step"]
+                x = parsed[hnum]["times"][j] if x_axis == "time" else parsed[hnum]["step"]
                 plt.plot(x, loss, color=color, alpha=0.5)
         description = f": {descriptions[i]}" if descriptions[i] else ""
         plt.plot(parsed[hnum][x_axis], parsed[hnum]["loss"], label=f"{hnum}{description}", color=color, lw=2)
@@ -252,7 +252,7 @@ if __name__ == "__main__":
     if args.extract_losses or args.print_final_stats:
         sys.exit(0)  # only perform the freeform code if nothing else is done
 
-    from rich import print
+    # from rich import print
 
     # headers = [f"0004-mtp-smear_layer{i}-0" for i in range(16)] + ["0000-baseline-0"]
     # ls = get_final_val_losses(
@@ -359,21 +359,74 @@ if __name__ == "__main__":
     #     x_axis="time",
     # )
 
+    # plot_val_loss(
+    #     filename="results-final.md",
+    #     header_numbers=[f"0000-baseline-{i}" for i in range(10)]
+    #             + [f"0004-mtp-smear_layer7-{i}" for i in range(10)]
+    #             + [f"0009-mtp-same-layer-with-trafo-smear_layer7-{i}" for i in range(10)]
+    #             + [f"0010-mtp-with-trafo-smear_layer7-{i}" for i in range(10)]
+    #             + [f"0013-mtp-no-gate-smear_layer15-{i}" for i in range(10)]
+    #             + [f"0014-mtp-with-trafo-no-gate-smear_layer15-{i}" for i in range(10)],
+    #     average_over={
+    #         "baseline": [f"0000-baseline-{i}" for i in range(10)],
+    #         "mtp": [f"0004-mtp-smear_layer7-{i}" for i in range(10)],
+    #         "mtp-same-layer-trafo": [f"0009-mtp-same-layer-with-trafo-smear_layer7-{i}" for i in range(10)],
+    #         "mtp-trafo": [f"0010-mtp-with-trafo-smear_layer7-{i}" for i in range(10)],
+    #         "mtp-no-gate": [f"0013-mtp-no-gate-smear_layer15-{i}" for i in range(10)],
+    #         "mtp-trafo-no-gate": [f"0014-mtp-with-trafo-no-gate-smear_layer15-{i}" for i in range(10)],
+    #     },
+    #     x_axis="time",
+    # )
+
+    # plot_val_loss(
+    #     filename="results-scaled.md",
+    #     header_numbers=["015-scale-up-1B-baseline", "0017-scale-up-1B-mtp-no-gate-0"],
+    #     average_over={
+    #         "Baseline": ["015-scale-up-1B-baseline"],
+    #         "Smear-MTP": ["0017-scale-up-1B-mtp-no-gate-0"],
+    #     },
+    #     x_axis="time",
+    # )
+
+    # baseline_losses = get_final_val_losses("results.md", [f"0000-baseline-{i}" for i in range(12)])
+    # plot_final_losses_over_names_by_method(
+    #     filename="results.md",
+    #     method_to_header_numbers={
+    #         "mpt-smear 1": [f"0004-mtp-smear_layer{i}-0" for i in range(15)],
+    #         "mtp-difficulty 1": [f"0006-mtp-difficulty-estimation{i}-0" for i in range(15)],
+    #         "mtp from last token": [f"0007-mtp-from-last-token-smear_layer{i}-0" for i in range(15)],
+    #     },
+    #     x_labels=[str(i) for i in range(15)],
+    #     baseline_loss=sum(baseline_losses) / len(baseline_losses),
+    # )
+
+    # plot_val_loss(
+    #     filename="results-final.md",
+    #     header_numbers=[f"0000-baseline-{i}" for i in range(10)]
+    #             + [f"0004-mtp-smear_layer7-{i}" for i in range(10)]
+    #             + [f"0009-mtp-same-layer-with-trafo-smear_layer7-{i}" for i in range(10)]
+    #             + [f"0010-mtp-with-trafo-smear_layer7-{i}" for i in range(10)]
+    #             + [f"0013-mtp-no-gate-smear_layer15-{i}" for i in range(10)]
+    #             + [f"0014-mtp-with-trafo-no-gate-smear_layer15-{i}" for i in range(10)],
+    #     average_over={
+    #         "baseline": [f"0000-baseline-{i}" for i in range(10)],
+    #         "mtp": [f"0004-mtp-smear_layer7-{i}" for i in range(10)],
+    #         "mtp-same-layer-trafo": [f"0009-mtp-same-layer-with-trafo-smear_layer7-{i}" for i in range(10)],
+    #         "mtp-trafo": [f"0010-mtp-with-trafo-smear_layer7-{i}" for i in range(10)],
+    #         "mtp-no-gate": [f"0013-mtp-no-gate-smear_layer15-{i}" for i in range(10)],
+    #         "mtp-trafo-no-gate": [f"0014-mtp-with-trafo-no-gate-smear_layer15-{i}" for i in range(10)],
+    #     },
+    #     x_axis="time",
+    # )
+
     plot_val_loss(
         filename="results-final.md",
         header_numbers=[f"0000-baseline-{i}" for i in range(10)]
-                + [f"0004-mtp-smear_layer7-{i}" for i in range(10)]
-                + [f"0009-mtp-same-layer-with-trafo-smear_layer7-{i}" for i in range(10)]
-                + [f"0010-mtp-with-trafo-smear_layer7-{i}" for i in range(10)]
-                + [f"0013-mtp-no-gate-smear_layer15-{i}" for i in range(10)]
-                + [f"0014-mtp-with-trafo-no-gate-smear_layer15-{i}" for i in range(10)],
+                + [f"0013-mtp-no-gate-smear_layer15-{i}" for i in range(10)],
         average_over={
-            "baseline": [f"0000-baseline-{i}" for i in range(10)],
-            "mtp": [f"0004-mtp-smear_layer7-{i}" for i in range(10)],
-            "mtp-same-layer-trafo": [f"0009-mtp-same-layer-with-trafo-smear_layer7-{i}" for i in range(10)],
-            "mtp-trafo": [f"0010-mtp-with-trafo-smear_layer7-{i}" for i in range(10)],
-            "mtp-no-gate": [f"0013-mtp-no-gate-smear_layer15-{i}" for i in range(10)],
-            "mtp-trafo-no-gate": [f"0014-mtp-with-trafo-no-gate-smear_layer15-{i}" for i in range(10)],
+            "Baseline": [f"0000-baseline-{i}" for i in range(10)],
+            "Smear-MTP": [f"0013-mtp-no-gate-smear_layer15-{i}" for i in range(10)],
         },
         x_axis="time",
+        plot_all=True,
     )
