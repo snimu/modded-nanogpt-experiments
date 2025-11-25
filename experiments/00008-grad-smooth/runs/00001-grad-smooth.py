@@ -483,7 +483,7 @@ schedulers = [torch.optim.lr_scheduler.LambdaLR(opt, get_lr) for opt in optimize
 # begin logging
 if master_process:
     run_id = str(uuid.uuid4())
-    logdir = '../logs/00001-grad-smooth'
+    logdir = f'../logs/00001-grad-smooth-g{gradient_mix_factor}-b{args.batch_size}'
     os.makedirs(logdir, exist_ok=True)
     logfile = f'{logdir}/{run_id}.txt'
     # create the log file
