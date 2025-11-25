@@ -7,7 +7,7 @@ import argparse # Added for CLI control
 # CLI Argument Parsing
 # -----------------------------------------------------------------------------
 parser = argparse.ArgumentParser(description="Modded NanoGPT with Gradient Mixing")
-parser.add_argument('--batchsize', '-b', type=int, default=8*64, help='Global batch size across all devices')
+parser.add_argument('--batch-size', '-b', type=int, default=8*64, help='Global batch size across all devices')
 parser.add_argument('--gradient-mix-factor', '-g', type=float, default=0.1, help='Weight for the previous model gradients')
 cli_args, extra_args = parser.parse_known_args()
 
